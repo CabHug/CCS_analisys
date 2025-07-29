@@ -15,6 +15,10 @@ data_base.columns = data_base.columns.str.strip()
 data_base.drop(data_base.columns[0], axis=1, inplace=True)
 
 # FUNCTION DEFINITION
+def find_replace_value(i, id, df, id_column, column):
+    value = df.loc[df[id_column] == id, column].dropna().iloc[0]
+    df.loc[i, column] = value
+
 # function to find missing information in dataframe, find if any similar data exist to replace in missing one
 # parameter action [R(Raplace with similar values), D(drop missing values), F(fill missing values with null)]
 def check_if_empty(wdf, df, column, actions):
@@ -27,20 +31,22 @@ def check_if_empty(wdf, df, column, actions):
     id_invalid = df.loc[mask, id_column]
     # This serie will cntain boolean values, when True has valid data
     id_valid = df.loc[~mask, id_column]
-    
+    # This serie will contain values that has a values despite has missing values in another row
+    has_value = id_invalid[id_invalid.isin(id_valid)]
+    # This serie will contain values that hasn't a value despite has missing values in another row
+    has_no_val = id_invalid[~id_invalid.isin(id_valid)]
+
     for action in  actions:
         # Option when whant to perform replacement with backup
         if action == 'R':
-            # This serie will contain values that has a values despite has missing values in another row
-            has_value = id_invalid[id_invalid.isin(id_valid)]
             for i, id in has_value.items():
-                value = df.loc[df[id_column] == id, column].dropna().iloc[0]
-                df.loc[i, column] = value
+                find_replace_value(i, id, df, id_column, column)
+                #value = df.loc[df[id_column] == id, column].dropna().iloc[0]
+                #df.loc[i, column] = value
             print("Row that has value: \n", has_value)
 
         elif action == 'D':
-            # This serie will contain values that hasn't a value despite has missing values in another row
-            has_no_val = id_invalid[~id_invalid.isin(id_valid)]
+
             for i, id in has_no_val.items():
                 wdf = pd.concat([wdf, df.loc[[i]]], ignore_index=True)
                 df = df.drop(i, axis=0)
@@ -49,7 +55,11 @@ def check_if_empty(wdf, df, column, actions):
         # Option when whan to perform data filling with null value you can customice it
         elif action == 'F':
             filling = 'null'
-            print(id_invalid)
+            if not has_value.empty:
+                print('Please perform a replacement!')
+            
+            for i, id in has_no_val.items():
+                df.loc[i, column] = filling
 
         else:
             print("Error! action parameter wrong.")
@@ -68,12 +78,12 @@ data_base = data_base[data_base[id_column].apply(lambda x : str(x).strip() !='')
 # I will clean data of 'primer apellido' -> this field must has a value
 fst_last_name = next(headListIter)
 # I will find if any field is empty and fill it with similar data getting from another field with tha same customer_id
-data_base, wrong_df = check_if_empty(wrong_df, data_base, fst_last_name, 'D')
+data_base, wrong_df = check_if_empty(wrong_df, data_base, fst_last_name, ['R','D'])
 
 # I will clean data of 'primer apellido' -> this field must has a value
 scd_last_name = next(headListIter)
 # I will find if any field is empty and fill it with similar data getting from another field with tha same customer_id
-data_base, wrong_df = check_if_empty(wrong_df, data_base, scd_last_name, 'R')
+data_base, wrong_df = check_if_empty(wrong_df, data_base, scd_last_name, 'F')
 
 #for head in headListIter:
 #    print(f'header to update: {head}')
