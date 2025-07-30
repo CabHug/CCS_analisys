@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 
+from data_source.df_source import gender_sre
+
 ### READ DATA FROM RAW FILES
 path = "C:/Users/Hugo/Documents/MEGA/PROYECTOS/CCS/Analisis CCS/Python-analisys/data_source/CCS_FEBRERO_2024.xlsm"
 data_base = pd.read_excel(path)
@@ -74,6 +76,9 @@ def move_column(df, index, name, n_name=None):
 def remove_column(df, name):
     df.drop(name, axis=1, inplace=True)
 
+def replace_text(df, sre, tex):
+    pass
+
 ### MOVING COLUMNS AND DROPPING COLUMNS
 data_base = move_column(data_base, 5, 'FECHA DE NACIMIENTO')
 data_base = move_column(data_base, 6, 'GENERO')
@@ -93,7 +98,7 @@ remove_column(data_base, 'NOMBRE CERTIFICADO')
 remove_column(data_base, 'NOMBRE PDF')
 
 
-### START DATA CLEANING LOGIC
+### START DATA CLEANING LOGIC ###
 headListIter = iter(list(data_base.columns))
 # 'NUMERO DE IDENTIFICACION' FIELD
 # first I will find and remove data that hasn't a ID related
@@ -125,7 +130,15 @@ scd_name = next(headListIter)
 # I will find if any field is empty and fill it with similar data getting from another field with tha same customer_id if not will fill the filed with null
 data_base, wrong_df = check_if_empty(wrong_df, data_base, scd_name, ['R','F'])
 
+# 'FECHA DE NACIMIENTO' FIELD
+# I will clean data of 'fecha de nacimiento' -> this field can has null values
+brn_date = next(headListIter)
 
+# 'GENERO' FIELD
+# I will clean data of 'fecha de nacimiento' -> this field can has null values
+brn_date = next(headListIter)
+# I will look for rows with same id and the needed info
+data_base, wrong_df = check_if_empty(wrong_df, data_base, brn_date, ['R','F'])
 
 #for head in headListIter:
 #    print(f'header to update: {head}')
