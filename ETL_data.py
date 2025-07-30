@@ -1,20 +1,20 @@
 import numpy as np
 import pandas as pd
 
-# READ DATA FROM RAW FILES
+### READ DATA FROM RAW FILES
 path = "C:/Users/Hugo/Documents/MEGA/PROYECTOS/CCS/Analisis CCS/Python-analisys/data_source/CCS_FEBRERO_2024.xlsm"
 data_base = pd.read_excel(path)
 
-# CREATE A NEW DATA FRAME TO STORE WRONG DATA
+### CREATE A NEW DATA FRAME TO STORE WRONG DATA
 wrong_df = pd.DataFrame(columns=data_base.columns)
 
-# STEPS BEFORE DATA CLEANING
+### STEPS BEFORE DATA CLEANING
 # Cleaning headers of hidden spaces
 data_base.columns = data_base.columns.str.strip()
 # Remove the first row from each data frame (docuemnt's index column)
 data_base.drop(data_base.columns[0], axis=1, inplace=True)
 
-# FUNCTION DEFINITION
+### FUNCTION DEFINITION
 def find_replace_value(i, id, df, id_column, column):
     value = df.loc[df[id_column] == id, column].dropna().iloc[0]
     df.loc[i, column] = value
@@ -41,12 +41,9 @@ def check_if_empty(wdf, df, column, actions):
         if action == 'R':
             for i, id in has_value.items():
                 find_replace_value(i, id, df, id_column, column)
-                #value = df.loc[df[id_column] == id, column].dropna().iloc[0]
-                #df.loc[i, column] = value
             print("Row that has value: \n", has_value)
 
         elif action == 'D':
-
             for i, id in has_no_val.items():
                 wdf = pd.concat([wdf, df.loc[[i]]], ignore_index=True)
                 df = df.drop(i, axis=0)
@@ -65,25 +62,70 @@ def check_if_empty(wdf, df, column, actions):
             print("Error! action parameter wrong.")
 
     return df, wdf
-    
 
-# START DATA CLEANING LOGIC
+def move_column(df, index, name, n_name=None):
+    if n_name is None:
+        n_name = name
+    values = df.pop(name)
+    df.insert(index, n_name, values)
+
+    return df
+
+def remove_column(df, name):
+    df.drop(name, axis=1, inplace=True)
+
+### MOVING COLUMNS AND DROPPING COLUMNS
+data_base = move_column(data_base, 5, 'FECHA DE NACIMIENTO')
+data_base = move_column(data_base, 6, 'GENERO')
+data_base = move_column(data_base, 7, 'CELULAR')
+data_base = move_column(data_base, 8, 'PERFIL DEL PROFESIONAL', 'PROFESION')
+data_base = move_column(data_base, 9, 'CURSO')
+data_base = move_column(data_base, 10, 'RESPONSABLE', 'RESPONSABLE VENTA')
+data_base = move_column(data_base, 11, 'VALOR UNITARIO')
+data_base = move_column(data_base, 12, 'MEDIO DE PAGO')
+data_base = move_column(data_base, 13, 'FECHA DE PAGO')
+data_base = move_column(data_base, 14, 'REALIZADOR', 'ELABORO')
+remove_column(data_base, 'DIA')
+remove_column(data_base, 'MES')
+remove_column(data_base, 'NOMBRE CURSO')
+remove_column(data_base, 'NOMBRE COMPLETO')
+remove_column(data_base, 'NOMBRE CERTIFICADO')
+remove_column(data_base, 'NOMBRE PDF')
+
+
+### START DATA CLEANING LOGIC
 headListIter = iter(list(data_base.columns))
-
+# 'NUMERO DE IDENTIFICACION' FIELD
 # first I will find and remove data that hasn't a ID related
 id_column = next(headListIter)
 data_base = data_base.dropna(subset=id_column)
 data_base = data_base[data_base[id_column].apply(lambda x : str(x).strip() !='')]
 
+# 'PRIMER APELLIDO' FIELD
 # I will clean data of 'primer apellido' -> this field must has a value
 fst_last_name = next(headListIter)
 # I will find if any field is empty and fill it with similar data getting from another field with tha same customer_id
 data_base, wrong_df = check_if_empty(wrong_df, data_base, fst_last_name, ['R','D'])
 
-# I will clean data of 'primer apellido' -> this field must has a value
+# 'SEGUNDO APELLIDO' FIELD
+# I will clean data of 'segundo apellido' -> this field can has null values
 scd_last_name = next(headListIter)
+# I will find if any field is empty and fill it with similar data getting from another field with tha same customer_id if not will fill the filed with null
+data_base, wrong_df = check_if_empty(wrong_df, data_base, scd_last_name, ['R','F'])
+
+# 'PRIMER NOMBRE' FIELD
+# I will clean data of 'Primer nombre' -> this field must has a value
+fst_name = next(headListIter)
 # I will find if any field is empty and fill it with similar data getting from another field with tha same customer_id
-data_base, wrong_df = check_if_empty(wrong_df, data_base, scd_last_name, 'F')
+data_base, wrong_df = check_if_empty(wrong_df, data_base, fst_name, ['R','D'])
+
+# 'SEGUNDO NOMBRE' FIELD
+# I will clean data of 'segundo nombre' -> this field can has null values
+scd_name = next(headListIter)
+# I will find if any field is empty and fill it with similar data getting from another field with tha same customer_id if not will fill the filed with null
+data_base, wrong_df = check_if_empty(wrong_df, data_base, scd_name, ['R','F'])
+
+
 
 #for head in headListIter:
 #    print(f'header to update: {head}')
