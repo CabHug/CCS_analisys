@@ -136,7 +136,7 @@ data_base, wrong_df = check_if_empty(wrong_df, data_base, fst_last_name, ['R','D
 # I will clean data of 'segundo apellido' -> this field can has null values
 scd_last_name = next(headListIter)
 # I will find if any field is empty and fill it with similar data getting from another field with tha same customer_id if not will fill the filed with null
-data_base, wrong_df = check_if_empty(wrong_df, data_base, scd_last_name, ['R','F'])
+data_base, wrong_df = check_if_empty(wrong_df, data_base, scd_last_name, ['R','F','C'])
 
 # 'PRIMER NOMBRE' FIELD
 # I will clean data of 'Primer nombre' -> this field must has a value
@@ -148,7 +148,7 @@ data_base, wrong_df = check_if_empty(wrong_df, data_base, fst_name, ['R','D'])
 # I will clean data of 'segundo nombre' -> this field can has null values
 scd_name = next(headListIter)
 # I will find if any field is empty and fill it with similar data getting from another field with tha same customer_id if not will fill the filed with null
-data_base, wrong_df = check_if_empty(wrong_df, data_base, scd_name, ['R','F'])
+data_base, wrong_df = check_if_empty(wrong_df, data_base, scd_name, ['R','F','C'])
 
 # 'FECHA DE NACIMIENTO' FIELD
 # I will clean data of 'fecha de nacimiento' -> this field can has null values
@@ -169,7 +169,7 @@ data_base[phone] = data_base[phone].astype('str').apply(lambda num: phone_valida
 # 'PROFESION' FIELD
 # I will clean data of 'Profesion' -> this field can has null values
 profession = next(headListIter)
-data_base, wrong_df = check_if_empty(wrong_df, data_base, scd_last_name, ['R','F'])
+data_base, wrong_df = check_if_empty(wrong_df, data_base, profession, ['R','F','C'])
 
 
 
