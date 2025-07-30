@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 
+import phonenumbers
+
 from data_source.df_source import gender_sre
 
 ### READ DATA FROM RAW FILES
@@ -22,7 +24,7 @@ def find_replace_value(i, id, df, id_column, column):
     df.loc[i, column] = value
 
 # function to find missing information in dataframe, find if any similar data exist to replace in missing one
-# parameter action [R(Raplace with similar values), D(drop missing values), F(fill missing values with null)]
+# parameter action [R(Raplace with similar values), D(drop missing values), F(fill missing values with null), C(To capitalize the text)]
 def check_if_empty(wdf, df, column, actions):
     print('*'*50)
     print(f'Data cleaning for {column} column')
@@ -45,10 +47,12 @@ def check_if_empty(wdf, df, column, actions):
                 find_replace_value(i, id, df, id_column, column)
             print("Row that has value: \n", has_value)
 
+        # Option when whant to drop a invalid value
         elif action == 'D':
             for i, id in has_no_val.items():
                 wdf = pd.concat([wdf, df.loc[[i]]], ignore_index=True)
                 df = df.drop(i, axis=0)
+                df = df.reset_index()
             print("Row that hasn't value: \n", has_no_val)
 
         # Option when whan to perform data filling with null value you can customice it
@@ -59,6 +63,11 @@ def check_if_empty(wdf, df, column, actions):
             
             for i, id in has_no_val.items():
                 df.loc[i, column] = filling
+
+        # Option to capitalice the text
+        elif action == 'C':
+            df[column] = df[column].str.capitalize()
+
 
         else:
             print("Error! action parameter wrong.")
@@ -76,8 +85,19 @@ def move_column(df, index, name, n_name=None):
 def remove_column(df, name):
     df.drop(name, axis=1, inplace=True)
 
-def replace_text(df, sre, tex):
-    pass
+def replace_text(df, column, sre):
+    df[column] = df[column].map(sre).fillna('null')
+
+def phone_validation(number, codigo='CO'):
+    try:
+        telefono_v = phonenumbers.parse(number, codigo)
+        if phonenumbers.is_valid_number(telefono_v):
+            return number
+        else:
+            return 'null'
+    except phonenumbers.NumberParseException:
+        return 'null'
+
 
 ### MOVING COLUMNS AND DROPPING COLUMNS
 data_base = move_column(data_base, 5, 'FECHA DE NACIMIENTO')
@@ -136,12 +156,22 @@ brn_date = next(headListIter)
 
 # 'GENERO' FIELD
 # I will clean data of 'fecha de nacimiento' -> this field can has null values
-brn_date = next(headListIter)
+gender = next(headListIter)
 # I will look for rows with same id and the needed info
-data_base, wrong_df = check_if_empty(wrong_df, data_base, brn_date, ['R','F'])
+data_base, wrong_df = check_if_empty(wrong_df, data_base, gender, ['R','F'])
+replace_text(data_base, gender, gender_sre)
 
-#for head in headListIter:
-#    print(f'header to update: {head}')
+# 'CELULAR' FIELD
+# I will clean data of 'Celular' -> this field can has null values
+phone = next(headListIter)
+data_base[phone] = data_base[phone].astype('str').apply(lambda num: phone_validation(num, codigo='CO'))
+
+# 'PROFESION' FIELD
+# I will clean data of 'Profesion' -> this field can has null values
+profession = next(headListIter)
+data_base, wrong_df = check_if_empty(wrong_df, data_base, scd_last_name, ['R','F'])
+
+
 
 
 print('-'*50)
