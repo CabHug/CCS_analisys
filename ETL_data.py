@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 
 import phonenumbers
+import re
 
 from data_source.df_source import gender_sre
 
@@ -19,6 +20,9 @@ data_base.columns = data_base.columns.str.strip()
 data_base.drop(data_base.columns[0], axis=1, inplace=True)
 
 ### FUNCTION DEFINITION
+def clean_numer(number):
+    return re.sub(r'\D', '', number)
+
 def find_replace_value(i, id, df, id_column, column):
     value = df.loc[df[id_column] == id, column].dropna().iloc[0]
     df.loc[i, column] = value
@@ -125,6 +129,7 @@ headListIter = iter(list(data_base.columns))
 # 'NUMERO DE IDENTIFICACION' FIELD
 # first I will find and remove data that hasn't a ID related
 id_column = next(headListIter)
+data_base[id_column] = data_base[id_column].astype('str').apply(lambda num : clean_numer(num))
 data_base = data_base.dropna(subset=id_column)
 data_base = data_base[data_base[id_column].apply(lambda x : str(x).strip() !='')]
 
@@ -166,8 +171,8 @@ replace_text(data_base, gender, gender_sre)
 # 'CELULAR' FIELD
 # I will clean data of 'Celular' -> this field can has null values
 phone = next(headListIter)
-data_base[phone] = data_base[phone].astype('str').apply(lambda num: phone_validation(num, codigo='CO'))
-data_base, wrong_df = check_if_empty(wrong_df, data_base, gender, id_column, ['R','F'])
+#data_base[phone] = data_base[phone].astype('str').apply(lambda num: phone_validation(num, codigo='CO'))
+data_base, wrong_df = check_if_empty(wrong_df, data_base, phone, id_column, ['R','F'])
 
 # 'PROFESION' FIELD
 # I will clean data of 'Profesion' -> this field can has null values
