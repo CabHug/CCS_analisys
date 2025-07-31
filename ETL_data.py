@@ -25,16 +25,16 @@ def find_replace_value(i, id, df, id_column, column):
 
 # function to find missing information in dataframe, find if any similar data exist to replace in missing one
 # parameter action [R(Raplace with similar values), D(drop missing values), F(fill missing values with null), C(To capitalize the text)]
-def check_if_empty(wdf, df, column, actions):
+def check_if_empty(wdf, df, column, column2, actions):
     print('*'*50)
     print(f'Data cleaning for {column} column')
-    id_column = 'NUMERO DE IDENTIFICACION'
+    
     # This mask will return al serie bool with values that being empty or NAN
     mask = df[column].apply(lambda x: str(x).strip() == '') | df[column].isna()
     # This serie will contain boolean values, when True has missing data
-    id_invalid = df.loc[mask, id_column]
+    id_invalid = df.loc[mask, column2]
     # This serie will cntain boolean values, when True has valid data
-    id_valid = df.loc[~mask, id_column]
+    id_valid = df.loc[~mask, column2]
     # This serie will contain values that has a values despite has missing values in another row
     has_value = id_invalid[id_invalid.isin(id_valid)]
     # This serie will contain values that hasn't a value despite has missing values in another row
@@ -44,7 +44,7 @@ def check_if_empty(wdf, df, column, actions):
         # Option when whant to perform replacement with backup
         if action == 'R':
             for i, id in has_value.items():
-                find_replace_value(i, id, df, id_column, column)
+                find_replace_value(i, id, df, column2, column)
             print("Row that has value: \n", has_value)
 
         # Option when whant to drop a invalid value
@@ -67,7 +67,10 @@ def check_if_empty(wdf, df, column, actions):
         # Option to capitalice the text
         elif action == 'C':
             df[column] = df[column].str.capitalize()
-
+        
+        # opciton to uppercase the text
+        elif action == 'U':
+            df[column] = df[column].str.upper()
 
         else:
             print("Error! action parameter wrong.")
@@ -97,7 +100,6 @@ def phone_validation(number, codigo='CO'):
             return 'null'
     except phonenumbers.NumberParseException:
         return 'null'
-
 
 ### MOVING COLUMNS AND DROPPING COLUMNS
 data_base = move_column(data_base, 5, 'FECHA DE NACIMIENTO')
@@ -130,25 +132,25 @@ data_base = data_base[data_base[id_column].apply(lambda x : str(x).strip() !='')
 # I will clean data of 'primer apellido' -> this field must has a value
 fst_last_name = next(headListIter)
 # I will find if any field is empty and fill it with similar data getting from another field with tha same customer_id
-data_base, wrong_df = check_if_empty(wrong_df, data_base, fst_last_name, ['R','D'])
+data_base, wrong_df = check_if_empty(wrong_df, data_base, fst_last_name, id_column, ['R','D'])
 
 # 'SEGUNDO APELLIDO' FIELD
 # I will clean data of 'segundo apellido' -> this field can has null values
 scd_last_name = next(headListIter)
 # I will find if any field is empty and fill it with similar data getting from another field with tha same customer_id if not will fill the filed with null
-data_base, wrong_df = check_if_empty(wrong_df, data_base, scd_last_name, ['R','F','C'])
+data_base, wrong_df = check_if_empty(wrong_df, data_base, scd_last_name, id_column, ['R','C','F'])
 
 # 'PRIMER NOMBRE' FIELD
 # I will clean data of 'Primer nombre' -> this field must has a value
 fst_name = next(headListIter)
 # I will find if any field is empty and fill it with similar data getting from another field with tha same customer_id
-data_base, wrong_df = check_if_empty(wrong_df, data_base, fst_name, ['R','D'])
+data_base, wrong_df = check_if_empty(wrong_df, data_base, fst_name, id_column, ['R','D'])
 
 # 'SEGUNDO NOMBRE' FIELD
 # I will clean data of 'segundo nombre' -> this field can has null values
 scd_name = next(headListIter)
 # I will find if any field is empty and fill it with similar data getting from another field with tha same customer_id if not will fill the filed with null
-data_base, wrong_df = check_if_empty(wrong_df, data_base, scd_name, ['R','F','C'])
+data_base, wrong_df = check_if_empty(wrong_df, data_base, scd_name, id_column, ['R','C','F'])
 
 # 'FECHA DE NACIMIENTO' FIELD
 # I will clean data of 'fecha de nacimiento' -> this field can has null values
@@ -158,26 +160,42 @@ brn_date = next(headListIter)
 # I will clean data of 'fecha de nacimiento' -> this field can has null values
 gender = next(headListIter)
 # I will look for rows with same id and the needed info
-data_base, wrong_df = check_if_empty(wrong_df, data_base, gender, ['R','F'])
+data_base, wrong_df = check_if_empty(wrong_df, data_base, gender, id_column, ['R','F'])
 replace_text(data_base, gender, gender_sre)
 
 # 'CELULAR' FIELD
 # I will clean data of 'Celular' -> this field can has null values
 phone = next(headListIter)
 data_base[phone] = data_base[phone].astype('str').apply(lambda num: phone_validation(num, codigo='CO'))
+data_base, wrong_df = check_if_empty(wrong_df, data_base, gender, id_column, ['R','F'])
 
 # 'PROFESION' FIELD
 # I will clean data of 'Profesion' -> this field can has null values
 profession = next(headListIter)
-data_base, wrong_df = check_if_empty(wrong_df, data_base, profession, ['R','F','C'])
+data_base, wrong_df = check_if_empty(wrong_df, data_base, profession, id_column, ['R','C','F'])
 
+# 'CURSO' FIELD
+course = next(headListIter)
+data_base, wrong_df = check_if_empty(wrong_df, data_base, course, id_column, ['U','D'])
 
+# 'RESPONSABLE VENTA' FIELD
+seller = next(headListIter)
+data_base, wrong_df = check_if_empty(wrong_df, data_base, seller, id_column, ['R','C','F'])
+
+# 'VALOR UNITARIO' FIELD
+unit_value = next(headListIter)
+data_base[unit_value] = pd.to_numeric(data_base[unit_value], errors='coerce')
 
 
 print('-'*50)
 print(data_base.isna().sum())
 print('-'*50)
 print(wrong_df)
+print('-'*50)
+print('Detalles del data frame')
+print('-'*50)
+print(data_base.dtypes)
+
 
 
 print('Archivo guardado!')
