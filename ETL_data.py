@@ -92,8 +92,11 @@ def move_column(df, index, name, n_name=None):
 def remove_column(df, name):
     df.drop(name, axis=1, inplace=True)
 
-def replace_text(df, column, sre):
-    df[column] = df[column].map(sre).fillna('null')
+def replace_text(df, column, sre, ifno='null'):
+    df[column] = df[column].map(sre).fillna(ifno)
+
+def replace_with_othvalue(df, column, sre, ifno='null'):
+    df[column] = df[column].map(sre).fillna(ifno)
 
 def phone_validation(number, codigo='CO'):
     try:
@@ -181,7 +184,7 @@ data_base, wrong_df = check_if_empty(wrong_df, data_base, profession, id_column,
 
 # 'CURSO' FIELD
 course = next(headListIter)
-data_base, wrong_df = check_if_empty(wrong_df, data_base, course, id_column, ['U','D'])
+data_base, wrong_df = check_if_empty(wrong_df, data_base, course, id_column, ['C','D'])
 
 # 'RESPONSABLE VENTA' FIELD
 seller = next(headListIter)
@@ -190,6 +193,8 @@ data_base, wrong_df = check_if_empty(wrong_df, data_base, seller, id_column, ['R
 # 'VALOR UNITARIO' FIELD
 unit_value = next(headListIter)
 data_base[unit_value] = pd.to_numeric(data_base[unit_value], errors='coerce')
+data_base, wrong_df = check_if_empty(wrong_df, data_base, unit_value, course, ['R'])
+
 
 
 print('-'*50)
