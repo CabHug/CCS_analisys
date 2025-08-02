@@ -7,7 +7,7 @@ import re
 from data_source.df_source import gender_sre
 
 ### READ DATA FROM RAW FILES
-path = "C:/Users/Hugo/Documents/MEGA/PROYECTOS/CCS/Analisis CCS/Python-analisys/data_source/CCS_FEBRERO_2024.xlsm"
+path = "C:/Users/Hugo/Documents/MEGA/PROYECTOS/CCS/Analisis CCS/Python-analisys/data_source/2024/CCS_FEBRERO_2024.xlsm"
 data_base = pd.read_excel(path)
 
 ### CREATE A NEW DATA FRAME TO STORE WRONG DATA
@@ -223,6 +223,43 @@ data_base, wrong_df = check_if_empty(wrong_df, data_base, maker, id_column, ['R'
 
 ## I'LL AGREGATE MISSING COLUMS TO THE DATAFRAME
 
+# 'CORREO' new column added on data frame
+mail = 'COREO'
+data_base.insert(9, mail, 'null')
+
+# 'CIUDAD/REGION' new column added on data frame
+city = 'CIUDAD/REGION'
+data_base.insert(10, city, 'Pasto - Nariño')
+
+# 'MODALIDAD' new column added on data frame
+modality = 'MODALIDAD'
+data_base.insert(13, modality, 'Virtual asincrónica')
+
+# 'RENOVACION' new column added on data frame
+renew = 'RENOVACION'
+data_base.insert(14, renew, 'No')
+
+# 'FECHA DE VENTA' new column added on data frame
+sale_date = 'FECHA DE VENTA'
+data_base.insert(16, sale_date, data_base[pay_date])
+
+# 'DESCUENTO' new column added on data frame
+discount = 'DESCUENTO'
+data_base.insert(18, discount, 'Sin descuento')
+
+# 'PRECIO NETO' new column added on data frame
+net_price = 'PRECIO NETO'
+data_base.insert(19, net_price, data_base[unit_value])
+
+# 'PROCEDENCIA' new column added on data frame
+origin = 'PROCEDENCIA'
+data_base.insert(23, origin, 'WhatsApp')
+
+# 'SEGUIMIENTO POST-VENTA' new column added on data frame
+follow_up = 'SEGUIMIENTO POST-VENTA'
+data_base.insert(24, follow_up, 'null')
+
+
 print('-'*50)
 print(data_base.isna().sum())
 print('-'*50)
@@ -235,7 +272,8 @@ print(data_base.dtypes)
 
 
 print('Archivo guardado!')
-data_base.to_excel("C:/Users/Hugo/Documents/MEGA/PROYECTOS/CCS/Analisis CCS/Python-analisys/data_source/CCS_FEBRERO_2024_cleaned.xlsx", index=False, engine="openpyxl")
-
+data_base.to_excel("C:/Users/Hugo/Documents/MEGA/PROYECTOS/CCS/Analisis CCS/Python-analisys/data_source/Cleaned/CCS_FEBRERO_2024_cleaned.xlsx", index=False, engine="openpyxl")
+wrong_df.to_excel("C:/Users/Hugo/Documents/MEGA/PROYECTOS/CCS/Analisis CCS/Python-analisys/data_source/Rejected/CCS_FEBRERO_2024_wrong.xlsx", index=False, engine="openpyxl")
+print('Archivo de datos erróneos guardado!')
 
 
