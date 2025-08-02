@@ -71,6 +71,10 @@ def check_if_empty(wdf, df, column, column2, actions):
         # Option to capitalice the text
         elif action == 'C':
             df[column] = df[column].str.capitalize()
+
+        # Option to capitalice everu first letter
+        elif action == 'T':
+            df[column] = df[column].str.title()
         
         # opciton to uppercase the text
         elif action == 'U':
@@ -163,6 +167,13 @@ data_base, wrong_df = check_if_empty(wrong_df, data_base, scd_name, id_column, [
 # 'FECHA DE NACIMIENTO' FIELD
 # I will clean data of 'fecha de nacimiento' -> this field can has null values
 brn_date = next(headListIter)
+data_base[brn_date] = pd.to_datetime(data_base[brn_date], errors='coerce')
+data_base, wrong_df = check_if_empty(wrong_df, data_base, brn_date, id_column, ['R'])
+data_base[brn_date] = data_base[brn_date].fillna(pd.Timestamp('01/01/1900'))  # Fill with a default date if NaT
+data_base[brn_date] = data_base[brn_date].apply(lambda x: x.strftime('%d/%m/%Y') if pd.notnull(x) else x)
+
+# I will look for rows with same id and the needed info
+
 
 # 'GENERO' FIELD
 # I will clean data of 'fecha de nacimiento' -> this field can has null values
@@ -188,14 +199,29 @@ data_base, wrong_df = check_if_empty(wrong_df, data_base, course, id_column, ['C
 
 # 'RESPONSABLE VENTA' FIELD
 seller = next(headListIter)
-data_base, wrong_df = check_if_empty(wrong_df, data_base, seller, id_column, ['R','C','F'])
+data_base, wrong_df = check_if_empty(wrong_df, data_base, seller, id_column, ['R','T','F'])
 
 # 'VALOR UNITARIO' FIELD
 unit_value = next(headListIter)
 data_base[unit_value] = pd.to_numeric(data_base[unit_value], errors='coerce')
 data_base, wrong_df = check_if_empty(wrong_df, data_base, unit_value, course, ['R'])
 
+# 'MEDIO DE PAGO' FIELD
+payment = next(headListIter)
+data_base, wrong_df = check_if_empty(wrong_df, data_base, payment, id_column, ['R','T','F'])
 
+# 'FECHA DE PAGO' FIELD
+pay_date = next(headListIter)
+data_base[pay_date] = pd.to_datetime(data_base[pay_date], errors='coerce')
+ata_base, wrong_df = check_if_empty(wrong_df, data_base, pay_date, id_column, ['R'])
+data_base[pay_date] = data_base[pay_date].fillna(pd.Timestamp('01/01/1900'))
+data_base[pay_date] = data_base[pay_date].apply(lambda x : x.strftime('%d/%m/%Y') if pd.notnull(x) else x)
+
+# 'ELAVORO' FIELD
+maker = next(headListIter)
+data_base, wrong_df = check_if_empty(wrong_df, data_base, maker, id_column, ['R','T','F'])
+
+## I'LL AGREGATE MISSING COLUMS TO THE DATAFRAME
 
 print('-'*50)
 print(data_base.isna().sum())
