@@ -18,59 +18,8 @@ wrong_df = pd.DataFrame(columns=data_base.columns)
 data_base.columns = data_base.columns.str.strip()
 # Remove the first row from each data frame (docuemnt's index column)
 data_base.drop(data_base.columns[0], axis=1, inplace=True)
-
-def re_organize_columns(df):
-    n_df = pd.DataFrame()
-    columns = df.columns.tolist()
-    provided_order = [
-    ['NUMERO DE IDENTIFICACION'],
-    ['PRIMER APELLIDO'],
-    ['SEGUNDO APELLIDO'],
-    ['PRIMER NOMBRE'],
-    ['SEGUNDO NOMBRE'],
-    ['FECHA DE NACIMIENTO'],
-    ['GENERO'],
-    ['CELULAR'],
-    ['CORREO'],
-    ['CIUDAD/REGION'],
-    ['PROFESION', 'PERFIL DEL PROFESIONAL'],
-    ['CURSO'],
-    ['MODALIDAD'],
-    ['RENOVACION'],
-    ['RESPONSABLE VENTA', 'RESPONSABLE'],
-    ['FECHA DE VENTA'],
-    ['VALOR UNITARIO'],
-    ['DESCUENTO'],
-    ['PRECIO NETO'],
-    ['MEDIO DE PAGO'],
-    ['FECHA DE PAGO'],
-    ['ELABORO', 'REALIZADOR'],
-    ['PROCEDENCIA'],
-    ['SEGUIMIENTO POST-VENTA']
-]
-
-    rejected_col = ['DIA', 'MES', 'NOMBRE CURSO', 'NOMBRE COMPLETO', 'NOMBRE CERTIFICADO', 'NOMBRE PDF']
-    New_colums = ['CORREO', 'CIUDAD/REGION', 'MODALIDAD', 'RENOVACION', 'FECHA DE VENTA', 'DESCUENTO', 'PRECIO NETO','PROCEDENCIA','SEGUIMIENTO POST-VENTA']
-    
-    for i, col in enumerate(provided_order, start=0):
-        for item in col:
-            print("Aqui ITEM: ", item)
-            if item in columns:
-                values = df.pop(item)
-                print(item, values.head(2))
-                n_df.insert(i, col[0], values)
-                break
-            elif item in New_colums:
-                n_df.insert(i, col[0], 'null')
-                break
-            else:
-                print('No encontro')
-                pass
-    
-    return n_df
-
+# Reorganize columns to have a better order
 data_base = re_organize_columns(data_base)
-print(data_base['CORREO'].head())
 
 
 ### START DATA CLEANING LOGIC ###

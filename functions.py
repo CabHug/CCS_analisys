@@ -1,3 +1,6 @@
+import numpy as np
+import pandas as pd
+
 import phonenumbers
 import re
 
@@ -94,4 +97,51 @@ def phone_validation(number, codigo='CO'):
     except phonenumbers.NumberParseException:
         return 'null'
     
+def re_organize_columns(df):
+    n_df = pd.DataFrame()
+    columns = df.columns.tolist()
+    provided_order = [
+    ['NUMERO DE IDENTIFICACION'],
+    ['PRIMER APELLIDO'],
+    ['SEGUNDO APELLIDO'],
+    ['PRIMER NOMBRE'],
+    ['SEGUNDO NOMBRE'],
+    ['FECHA DE NACIMIENTO'],
+    ['GENERO'],
+    ['CELULAR'],
+    ['CORREO'],
+    ['CIUDAD/REGION'],
+    ['PROFESION', 'PERFIL DEL PROFESIONAL'],
+    ['CURSO'],
+    ['MODALIDAD'],
+    ['RENOVACION'],
+    ['RESPONSABLE VENTA', 'RESPONSABLE'],
+    ['FECHA DE VENTA'],
+    ['VALOR UNITARIO'],
+    ['DESCUENTO'],
+    ['PRECIO NETO'],
+    ['MEDIO DE PAGO'],
+    ['FECHA DE PAGO'],
+    ['ELABORO', 'REALIZADOR'],
+    ['PROCEDENCIA'],
+    ['SEGUIMIENTO POST-VENTA']
+]
+
+    New_colums = ['CORREO', 'CIUDAD/REGION', 'MODALIDAD', 'RENOVACION', 'FECHA DE VENTA', 'DESCUENTO', 'PRECIO NETO','PROCEDENCIA','SEGUIMIENTO POST-VENTA']
     
+    for i, col in enumerate(provided_order, start=0):
+        for item in col:
+            print("Aqui ITEM: ", item)
+            if item in columns:
+                values = df.pop(item)
+                print(item, values.head(2))
+                n_df.insert(i, col[0], values)
+                break
+            elif item in New_colums:
+                n_df.insert(i, col[0], 'null')
+                break
+            else:
+                print('No encontro')
+                pass
+    
+    return n_df
