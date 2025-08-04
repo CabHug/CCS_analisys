@@ -33,11 +33,11 @@ def re_organize_columns(df):
     ['CELULAR'],
     ['CORREO'],
     ['CIUDAD/REGION'],
-    ['PROFESION'],
+    ['PROFESION', 'PERFIL DEL PROFESIONAL'],
     ['CURSO'],
     ['MODALIDAD'],
     ['RENOVACION'],
-    ['RESPONSABLE VENTA'],
+    ['RESPONSABLE VENTA', 'RESPONSABLE'],
     ['FECHA DE VENTA'],
     ['VALOR UNITARIO'],
     ['DESCUENTO'],
@@ -50,22 +50,27 @@ def re_organize_columns(df):
 ]
 
     rejected_col = ['DIA', 'MES', 'NOMBRE CURSO', 'NOMBRE COMPLETO', 'NOMBRE CERTIFICADO', 'NOMBRE PDF']
+    New_colums = ['CORREO', 'CIUDAD/REGION', 'MODALIDAD', 'RENOVACION', 'FECHA DE VENTA', 'DESCUENTO', 'PRECIO NETO','PROCEDENCIA','SEGUIMIENTO POST-VENTA']
     
     for i, col in enumerate(provided_order, start=0):
         for item in col:
+            print("Aqui ITEM: ", item)
             if item in columns:
                 values = df.pop(item)
+                print(item, values.head(2))
                 n_df.insert(i, col[0], values)
                 break
+            elif item in New_colums:
+                n_df.insert(i, col[0], 'null')
+                break
             else:
-                if item not in rejected_col:
-                    n_df.insert(i, col[0], 'null')
-                    break
+                print('No encontro')
+                pass
     
     return n_df
 
 data_base = re_organize_columns(data_base)
-print(data_base['CORREO'])
+print(data_base['CORREO'].head())
 
 
 ### START DATA CLEANING LOGIC ###
@@ -79,7 +84,7 @@ data_base = data_base[data_base[id_column].apply(lambda x : str(x).strip() !='')
 
 # 'PRIMER APELLIDO' FIELD
 fst_last_name = next(headListIter)
-data_base, wrong_df = check_if_empty(wrong_df, data_base, fst_last_name, id_column, ['R','D'])
+data_base, wrong_df = check_if_empty(wrong_df, data_base, fst_last_name, id_column, ['R','C','D'])
 
 # 'SEGUNDO APELLIDO' FIELD
 scd_last_name = next(headListIter)
@@ -87,7 +92,7 @@ data_base, wrong_df = check_if_empty(wrong_df, data_base, scd_last_name, id_colu
 
 # 'PRIMER NOMBRE' FIELD
 fst_name = next(headListIter)
-data_base, wrong_df = check_if_empty(wrong_df, data_base, fst_name, id_column, ['R','D'])
+data_base, wrong_df = check_if_empty(wrong_df, data_base, fst_name, id_column, ['R','C','D'])
 
 # 'SEGUNDO NOMBRE' FIELD
 scd_name = next(headListIter)
@@ -115,7 +120,10 @@ data_base[mail].fillna('null', inplace=True)
 
 # 'CIUDAD/REGION' new column added on data frame
 city = next(headListIter)
-data_base[city].fillna('Pasto - Nariño', inplace=True)
+if (data_base[city]=='null').all():
+    data_base[city] = 'Pasto - Nariño'  # Default value if all are NaN
+else:
+    data_base[city].fillna('Pasto - Nariño', inplace=True)
 
 # 'PROFESION' FIELD
 profession = next(headListIter)
@@ -127,11 +135,17 @@ data_base, wrong_df = check_if_empty(wrong_df, data_base, course, id_column, ['C
 
 # 'MODALIDAD' FIELD
 modality = next(headListIter)
-data_base[modality].fillna('Virtual asincrónica', inplace=True)
+if (data_base[modality]=='null').all():
+    data_base[modality] = 'Virtual asincrónica'
+else:
+    data_base, wrong_df = check_if_empty(wrong_df, data_base, modality, id_column, ['R','C','F'])
 
 # 'RENOVACION' new column added on data frame
 renew = next(headListIter)
-data_base[renew].fillna('No', inplace=True)
+if (data_base[renew]=='null').all():
+    data_base[renew] = 'No'
+else:
+    data_base, wrong_df = check_if_empty(wrong_df, data_base, renew, id_column, ['R','C','F'])
 
 # 'RESPONSABLE VENTA' FIELD
 seller = next(headListIter)
@@ -139,7 +153,14 @@ data_base, wrong_df = check_if_empty(wrong_df, data_base, seller, id_column, ['R
 
 # 'FECHA DE VENTA' new column added on data frame
 sale_date = next(headListIter)
-
+pay_date = 'FECHA DE PAGO'  # Assuming this is the same as the next field
+if (data_base[sale_date]=='null').all():
+    data_base[sale_date] = data_base[pay_date]  # Default to pay_date if all are NaN
+else:
+    data_base, wrong_df = check_if_empty(wrong_df, data_base, sale_date, id_column, ['R'])
+data_base[sale_date] = pd.to_datetime(data_base[sale_date], errors='coerce')
+data_base[sale_date] = data_base[sale_date].fillna(pd.Timestamp('01/01/1900'))
+data_base[sale_date] = data_base[sale_date].apply(lambda x : x.strftime('%d/%m/%Y') if pd.notnull(x) else x)
 
 # 'VALOR UNITARIO' FIELD
 unit_value = next(headListIter)
@@ -148,11 +169,18 @@ data_base, wrong_df = check_if_empty(wrong_df, data_base, unit_value, course, ['
 
 # 'DESCUENTO' new column added on data frame
 discount = next(headListIter)
-data_base[discount].fillna('Sin descuento', inplace=True)
+if (data_base[discount]=='null').all():
+    data_base[discount] = 'Sin descuento'
+else:
+    data_base, wrong_df = check_if_empty(wrong_df, data_base, discount, id_column, ['R','C','F'])
 
 # 'PRECIO NETO' new column added on data frame
 net_price = next(headListIter)
-
+if (data_base[net_price]=='null').all():
+    data_base[net_price] = data_base[unit_value]
+else:
+    data_base[unit_value] = pd.to_numeric(data_base[unit_value], errors='coerce')
+    data_base, wrong_df = check_if_empty(wrong_df, data_base, net_price, id_column, ['R'])
 
 # 'MEDIO DE PAGO' FIELD
 payment = next(headListIter)
@@ -171,11 +199,17 @@ data_base, wrong_df = check_if_empty(wrong_df, data_base, maker, id_column, ['R'
 
 # 'PROCEDENCIA' new column added on data frame
 origin = next(headListIter)
-
+if (data_base[origin]=='null').all():
+    data_base[origin] = 'Facebook'
+else:
+    data_base, wrong_df = check_if_empty(wrong_df, data_base, origin, id_column, ['R','C','F'])
 
 # 'SEGUIMIENTO POST-VENTA' new column added on data frame
 follow_up = next(headListIter)
-
+if (data_base[follow_up]=='null').all():
+    data_base[follow_up] = 'null'
+else:
+    data_base, wrong_df = check_if_empty(wrong_df, data_base, follow_up, id_column, ['C','F'])
 
 
 ###### VISUALITZATION OF DATA CLEANING RESULTS ######
@@ -196,4 +230,3 @@ print('Archivo guardado!')
 data_base.to_excel(cleaned_path, index=False, engine="openpyxl")
 wrong_df.to_excel(rejected_path, index=False, engine="openpyxl")
 print('Archivo de datos erróneos guardado!')
-

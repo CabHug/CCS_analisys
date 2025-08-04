@@ -54,7 +54,7 @@ def check_if_empty(wdf, df, column, column2, actions):
         elif action == 'C':
             df[column] = df[column].str.capitalize()
 
-        # Option to capitalice everu first letter
+        # Option to capitalice every first letter
         elif action == 'T':
             df[column] = df[column].str.title()
         
