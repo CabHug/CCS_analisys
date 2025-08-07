@@ -34,7 +34,6 @@ def check_if_empty(wdf, df, column, column2, actions):
         if action == 'R':
             for i, id in has_value.items():
                 find_replace_value(i, id, df, column2, column)
-            print("Row that has value: \n", has_value)
 
         # Option when whant to drop a invalid value
         elif action == 'D':
@@ -42,7 +41,6 @@ def check_if_empty(wdf, df, column, column2, actions):
                 wdf = pd.concat([wdf, df.loc[[i]]], ignore_index=True)
                 df = df.drop(i, axis=0)
                 df = df.reset_index()
-            print("Row that hasn't value: \n", has_no_val)
 
         # Option when whan to perform data filling with null value you can customice it
         elif action == 'F':
@@ -131,10 +129,8 @@ def re_organize_columns(df):
     
     for i, col in enumerate(provided_order, start=0):
         for item in col:
-            print("Aqui ITEM: ", item)
             if item in columns:
                 values = df.pop(item)
-                print(item, values.head(2))
                 n_df.insert(i, col[0], values)
                 break
             elif item in New_colums:
@@ -145,3 +141,6 @@ def re_organize_columns(df):
                 pass
     
     return n_df
+
+def drop_wrong_date(df, column):
+    df[column] = pd.to_datetime(df[column], errors='coerce')
