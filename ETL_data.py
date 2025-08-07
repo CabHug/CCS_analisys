@@ -38,7 +38,7 @@ class ETLData:
             print(f"Processing file: {file}")        
 
             ### READ DATA FROM RAW FILES
-            data_base = pd.read_excel(self.main_path+"/"+file)
+            data_base = pd.read_excel(self.main_path+year+"/"+file)
 
             ### CREATE A NEW DATA FRAME TO STORE WRONG DATA
             wrong_df = pd.DataFrame(columns=data_base.columns)
@@ -91,6 +91,7 @@ class ETLData:
 
             # 'CELULAR' FIELD
             phone = next(headListIter)
+            data_base[phone] = data_base[phone].astype(str).str.replace(" ", "", regex=False)
             data_base, wrong_df = check_if_empty(wrong_df, data_base, phone, id_column, ['R','F'])
 
             # 'CORREO' new column added on data frame
@@ -199,10 +200,19 @@ class ETLData:
             print(data_base.isna().sum())
             print('-'*50)
 
-            data_base.to_excel(cleaned_path, index=False, engine="openpyxl")
+            data_base.to_excel(cleaned_path+"Cleaned_"+file[:-4]+"xlsx", index=False, engine="openpyxl")
             print('Archivo guardado!')
             if not wrong_df.empty:
-                wrong_df.to_excel(rejected_path, index=False, engine="openpyxl")
+                wrong_df.to_excel(rejected_path+"Rejected_"+file[:-4]+"xlsx", index=False, engine="openpyxl")
                 print('Archivo de datos erróneos guardado!')
 
-            
+    def join_files(self):
+        pass
+    
+    def cleaning_profession_col(self):
+        pass
+
+
+### OBJECT CREATION ###
+CSS = ETLData(main_path, cleaned_path, rejected_path, files)
+CSS.ETL_first_cleaning()
