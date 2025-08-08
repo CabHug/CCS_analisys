@@ -9,13 +9,8 @@ from data_source.df_source import cleaned_path
 from data_source.df_source import rejected_path
 
 
-
-
 files = get_files()
 
-for file in files:
-    year = file.split('_')[1]
-    print(main_path+year+"/"+file)
 
 class ETLData:
     def __init__(self, main_path, cleaned_path, rejected_path, files):
@@ -34,11 +29,11 @@ class ETLData:
         It reads an Excel file, cleans and organizes the data, and saves the cleaned data to a new file.
         """
         for file in self.files:
-            year = file.split('_')[1]
+            f_year = file.split('_')[1]
             print(f"Processing file: {file}")        
 
             ### READ DATA FROM RAW FILES
-            data_base = pd.read_excel(self.main_path+year+"/"+file)
+            data_base = pd.read_excel(self.main_path+f_year+"/"+file)
 
             ### CREATE A NEW DATA FRAME TO STORE WRONG DATA
             wrong_df = pd.DataFrame(columns=data_base.columns)
@@ -96,7 +91,7 @@ class ETLData:
 
             # 'CORREO' new column added on data frame
             mail = next(headListIter)
-            data_base[mail].fillna('null', inplace=True)
+            data_base[mail] = data_base[mail].fillna('null')
 
             # 'CIUDAD/REGION' new column added on data frame
             city = next(headListIter)
@@ -138,7 +133,8 @@ class ETLData:
                 data_base[sale_date] = data_base[pay_date]  # Default to pay_date if all are NaN
             else:
                 data_base, wrong_df = check_if_empty(wrong_df, data_base, sale_date, id_column, ['R'])
-            data_base[sale_date] = pd.to_datetime(data_base[sale_date], errors='coerce')
+            data_base[sale_date] = pd.to_datetime(data_base[sale_date], format="%d/%m/%Y", errors='coerce')
+            data_base[sale_date] = data_base[sale_date].apply(lambda x : x.replace(year=f_year) if pd.notnull(x) and x.year != f_year else x)
             data_base[sale_date] = data_base[sale_date].fillna(pd.Timestamp('01/01/1900'))
             data_base[sale_date] = data_base[sale_date].apply(lambda x : x.strftime('%d/%m/%Y') if pd.notnull(x) else x)
 
@@ -168,8 +164,9 @@ class ETLData:
 
             # 'FECHA DE PAGO' FIELD
             pay_date = next(headListIter)
-            data_base[pay_date] = pd.to_datetime(data_base[pay_date], errors='coerce')
-            ata_base, wrong_df = check_if_empty(wrong_df, data_base, pay_date, id_column, ['R'])
+            data_base[pay_date] = pd.to_datetime(data_base[pay_date], format="%d/%m/%Y", errors='coerce')
+            data_base[pay_date] = data_base[pay_date].apply(lambda x : x.replace(year=f_year) if pd.notnull(x) and x.year != f_year else x)
+            data_base, wrong_df = check_if_empty(wrong_df, data_base, pay_date, id_column, ['R'])
             data_base[pay_date] = data_base[pay_date].fillna(pd.Timestamp('01/01/1900'))
             data_base[pay_date] = data_base[pay_date].apply(lambda x : x.strftime('%d/%m/%Y') if pd.notnull(x) else x)
 
@@ -209,7 +206,7 @@ class ETLData:
     def join_files(self):
         pass
     
-    def cleaning_profession_col(self):
+    def cleaning_column(self):
         pass
 
 
