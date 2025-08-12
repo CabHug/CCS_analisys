@@ -22,6 +22,12 @@ class ETLData:
             'M': 'Masculino',
             'F': 'Femenino'
             }
+        self.month_is = {
+            'ENERO': 1, 'FEBRERO': 2, 'MARZO': 3, 'ABRIL': 4,
+            'MAYO': 5, 'JUNIO': 6, 'JULIO': 7, 'AGOSTO': 8,
+            'SEPTIEMBRE': 9, 'OCTUBRE': 10, 'NOVIEMBRE': 11, 'DICIEMBRE': 12
+            }
+
 
     def ETL_first_cleaning(self):
         """
@@ -30,10 +36,14 @@ class ETLData:
         """
         for file in self.files:
             f_year = file.split('_')[1]
-            print(f"Processing file: {file}")        
+            f_month = self.month_is[file.split('_')[2][:-5]]
+            print(f"Processing file: {file}")
+            print(type(f_year))
+            print(type(f_month))        
 
             ### READ DATA FROM RAW FILES
             data_base = pd.read_excel(self.main_path+f_year+"/"+file)
+            f_year = int(f_year)
 
             ### CREATE A NEW DATA FRAME TO STORE WRONG DATA
             wrong_df = pd.DataFrame(columns=data_base.columns)
@@ -87,7 +97,8 @@ class ETLData:
             # 'CELULAR' FIELD
             phone = next(headListIter)
             data_base[phone] = data_base[phone].astype(str).str.replace(" ", "", regex=False)
-            data_base, wrong_df = check_if_empty(wrong_df, data_base, phone, id_column, ['R','F'])
+            data_base, wrong_df = check_if_empty(wrong_df, data_base, phone, id_column, ['R'])
+            data_base[phone] = data_base[phone].fillna('3000000000')
 
             # 'CORREO' new column added on data frame
             mail = next(headListIter)
@@ -128,14 +139,14 @@ class ETLData:
 
             # 'FECHA DE VENTA' new column added on data frame
             sale_date = next(headListIter)
-            pay_date = 'FECHA DE PAGO'  # Assuming this is the same as the next field
+            pay_date = 'FECHA DE PAGO' 
             if (data_base[sale_date]=='null').all():
                 data_base[sale_date] = data_base[pay_date]  # Default to pay_date if all are NaN
             else:
                 data_base, wrong_df = check_if_empty(wrong_df, data_base, sale_date, id_column, ['R'])
             data_base[sale_date] = pd.to_datetime(data_base[sale_date], format="%d/%m/%Y", errors='coerce')
             data_base[sale_date] = data_base[sale_date].apply(lambda x : x.replace(year=f_year) if pd.notnull(x) and x.year != f_year else x)
-            data_base[sale_date] = data_base[sale_date].fillna(pd.Timestamp('01/01/1900'))
+            data_base[sale_date] = data_base[sale_date].fillna(pd.Timestamp(f'04/{f_month:02d}/{f_year}'))
             data_base[sale_date] = data_base[sale_date].apply(lambda x : x.strftime('%d/%m/%Y') if pd.notnull(x) else x)
 
             # 'VALOR UNITARIO' FIELD
@@ -167,7 +178,7 @@ class ETLData:
             data_base[pay_date] = pd.to_datetime(data_base[pay_date], format="%d/%m/%Y", errors='coerce')
             data_base[pay_date] = data_base[pay_date].apply(lambda x : x.replace(year=f_year) if pd.notnull(x) and x.year != f_year else x)
             data_base, wrong_df = check_if_empty(wrong_df, data_base, pay_date, id_column, ['R'])
-            data_base[pay_date] = data_base[pay_date].fillna(pd.Timestamp('01/01/1900'))
+            data_base[pay_date] = data_base[pay_date].fillna(pd.Timestamp(f'04/{f_month:02d}/{f_year}'))
             data_base[pay_date] = data_base[pay_date].apply(lambda x : x.strftime('%d/%m/%Y') if pd.notnull(x) else x)
 
             # 'ELABORO' FIELD
