@@ -5,11 +5,21 @@ import os
 from datetime import datetime
 
 """
-This class allows you to perform basic data management 
+This class allows you to perform basic data management before EDA
 """
 class DataPipeline:
     def __init__(self):
         pass
+
+    # Method to take configuration from .json file, return all items
+    def read_config_json(self):
+        with open(self.config, 'r') as archive:
+            config = json.load(archive)
+        # When config file is empty return a False
+        if not config:
+            return False
+        
+        return config
 
     def find_replace_value(self, i, id, df, id_column, column):
         value = df.loc[df[id_column] == id, column].dropna().iloc[0]
@@ -35,6 +45,53 @@ class DataPipeline:
        
         for i, id in has_value.items():
             self.find_replace_value(i, id, df, column2, column)
+
+    def re_organize_columns(df):
+        n_df = pd.DataFrame()
+        columns = df.columns.tolist()
+        provided_order = [
+        ['NUMERO DE IDENTIFICACION'],
+        ['PRIMER APELLIDO'],
+        ['SEGUNDO APELLIDO'],
+        ['PRIMER NOMBRE'],
+        ['SEGUNDO NOMBRE'],
+        ['FECHA DE NACIMIENTO'],
+        ['GENERO'],
+        ['CELULAR'],
+        ['CORREO'],
+        ['CIUDAD/REGION'],
+        ['PROFESION', 'PERFIL DEL PROFESIONAL'],
+        ['CURSO'],
+        ['MODALIDAD'],
+        ['RENOVACION'],
+        ['RESPONSABLE VENTA', 'RESPONSABLE'],
+        ['FECHA DE VENTA'],
+        ['VALOR UNITARIO'],
+        ['DESCUENTO'],
+        ['PRECIO NETO'],
+        ['MEDIO DE PAGO'],
+        ['FECHA DE PAGO'],
+        ['ELABORO', 'REALIZADOR'],
+        ['PROCEDENCIA'],
+        ['SEGUIMIENTO POST-VENTA']
+    ]
+
+        New_colums = ['CORREO', 'CIUDAD/REGION', 'MODALIDAD', 'RENOVACION', 'FECHA DE VENTA', 'DESCUENTO', 'PRECIO NETO','PROCEDENCIA','SEGUIMIENTO POST-VENTA']
+        
+        for i, col in enumerate(provided_order, start=0):
+            for item in col:
+                if item in columns:
+                    values = df.pop(item)
+                    n_df.insert(i, col[0], values)
+                    break
+                elif item in New_colums:
+                    n_df.insert(i, col[0], 'null')
+                    break
+                else:
+                    print('No encontro')
+                    pass
+        
+        return n_df
 
 
 """
@@ -106,10 +163,7 @@ class Project:
                     files.append(file)
             self.work_files_per_year[str(start_year)] = files
             start_year += 1
-
-
-
-
+            
 CCS = Project()
 CCS.set_current_year()
 
