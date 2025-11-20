@@ -18,7 +18,7 @@ class DataPipeline:
         # When config file is empty return a False
         if not config:
             return False
-        
+        # Return of config.json file
         return config
 
     def find_replace_value(self, i, id, df, id_column, column):
@@ -27,77 +27,30 @@ class DataPipeline:
     
     # function to find missing information in dataframe, find if any similar data exist to replace in missing one
     # parameter action [R(Raplace with similar values), D(drop missing values), F(fill missing values with null), C(To capitalize the text)]
-    def check_if_empty(self, df, column, column2):
+    def check_if_empty(self, df, column, id_column):
         print('*'*50)
         print(f'Data cleaning for {column} column')
         
         # This mask will return al serie bool with values that being empty or NAN
         mask = df[column].apply(lambda x: str(x).strip() == '') | df[column].isna()
-        # This serie will contain boolean values, when True has missing data
-        id_invalid = df.loc[mask, column2]
-        # This serie will cntain boolean values, when True has valid data
-        id_valid = df.loc[~mask, column2]
+        # This serie will contain values that match with the missing valios in column_2
+        id_without_values = df.loc[mask, id_column]
+        # This serie will contain values that match with rows with info in column_2
+        id_with_values = df.loc[~mask, id_column]
         # This serie will contain values that has a values despite has missing values in another row
-        has_value = id_invalid[id_invalid.isin(id_valid)]
+        id_serie_with_value = id_without_values[id_without_values.isin(id_with_values)]
         # This serie will contain values that hasn't a value despite has missing values in another row
-        has_no_val = id_invalid[~id_invalid.isin(id_valid)]
+        #has_no_val = id_invalid[~id_invalid.isin(id_valid)]
 
        
-        for i, id in has_value.items():
-            self.find_replace_value(i, id, df, column2, column)
-
-    def re_organize_columns(df):
-        n_df = pd.DataFrame()
-        columns = df.columns.tolist()
-        provided_order = [
-        ['NUMERO DE IDENTIFICACION'],
-        ['PRIMER APELLIDO'],
-        ['SEGUNDO APELLIDO'],
-        ['PRIMER NOMBRE'],
-        ['SEGUNDO NOMBRE'],
-        ['FECHA DE NACIMIENTO'],
-        ['GENERO'],
-        ['CELULAR'],
-        ['CORREO'],
-        ['CIUDAD/REGION'],
-        ['PROFESION', 'PERFIL DEL PROFESIONAL'],
-        ['CURSO'],
-        ['MODALIDAD'],
-        ['RENOVACION'],
-        ['RESPONSABLE VENTA', 'RESPONSABLE'],
-        ['FECHA DE VENTA'],
-        ['VALOR UNITARIO'],
-        ['DESCUENTO'],
-        ['PRECIO NETO'],
-        ['MEDIO DE PAGO'],
-        ['FECHA DE PAGO'],
-        ['ELABORO', 'REALIZADOR'],
-        ['PROCEDENCIA'],
-        ['SEGUIMIENTO POST-VENTA']
-    ]
-
-        New_colums = ['CORREO', 'CIUDAD/REGION', 'MODALIDAD', 'RENOVACION', 'FECHA DE VENTA', 'DESCUENTO', 'PRECIO NETO','PROCEDENCIA','SEGUIMIENTO POST-VENTA']
-        
-        for i, col in enumerate(provided_order, start=0):
-            for item in col:
-                if item in columns:
-                    values = df.pop(item)
-                    n_df.insert(i, col[0], values)
-                    break
-                elif item in New_colums:
-                    n_df.insert(i, col[0], 'null')
-                    break
-                else:
-                    print('No encontro')
-                    pass
-        
-        return n_df
+        for i, id in id_serie_with_value.items():
+            self.find_replace_value(i, id, df, id_column, column)
 
 
 """
-This class will contain info related to the CCS_analisys
+This class will contain info related to the CCS_analisys and required methods
 """
-class Project:
+class Project(DataPipeline):
     def __init__(self):
         self.config = "./Python-analisys/config.json" # Config file
         self.start_year = "2024"
@@ -130,11 +83,9 @@ class Project:
 
     # Methods
 
-    # Method to take configuration from .json file
+    # Inherited method, 
     def read_config_json(self):
-        with open(self.config, 'r') as archive:
-            config = json.load(archive)
-
+        config = super().read_config_json()
         if not config:
             return False
 
