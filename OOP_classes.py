@@ -53,7 +53,7 @@ This class will contain info related to the CCS_analisys and required methods
 class Project(DataPipeline):
     def __init__(self):
         self.config = "./Python-analisys/config.json" # Config file
-        self.start_year = "2024"
+        self.start_year = "2023" # this 2023 is for testing
         self.current_year = ""
         self.info_source_path = ""
         self.cleaned_path = ""
@@ -114,13 +114,3 @@ class Project(DataPipeline):
                     files.append(file)
             self.work_files_per_year[str(start_year)] = files
             start_year += 1
-            
-CCS = Project()
-CCS.set_current_year()
-
-print(CCS.get_current_year())
-print(CCS.read_config_json())
-print(CCS.find_work_foldes())
-CCS.set_work_files_per_year()
-print(CCS.work_files_per_year)
-

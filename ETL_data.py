@@ -55,6 +55,7 @@ class ETLData:
             data_base.drop(data_base.columns[0], axis=1, inplace=True)
             # Reorganize columns to have a better order
             data_base = re_organize_columns(data_base)
+            
 
 
             ### START DATA CLEANING LOGIC ###
