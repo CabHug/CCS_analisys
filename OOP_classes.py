@@ -1,6 +1,7 @@
 import pandas as pd
 import json
 import os
+import re
 
 from datetime import datetime
 
@@ -10,6 +11,11 @@ This class allows you to perform basic data management before EDA
 class DataPipeline:
     def __init__(self):
         pass
+    
+    # Method 
+    def clean_numer(self, work_df, column):
+        work_df[column] = work_df[column].str.replace(r"\D", "", regex=True)
+        return work_df
 
     # Method to take configuration from .json file, return all items
     def read_config_json(self):
@@ -83,7 +89,7 @@ class Project(DataPipeline):
 
     # Methods
 
-    # Inherited method, 
+    # Inherited method, set attribute fro class Project
     def read_config_json(self):
         config = super().read_config_json()
         if not config:
@@ -114,3 +120,45 @@ class Project(DataPipeline):
                     files.append(file)
             self.work_files_per_year[str(start_year)] = files
             start_year += 1
+    
+    def re_organize_columns(self, work_df):
+        temporary_df = pd.DataFrame()
+        columns = work_df.columns.tolist()
+        
+        provided_order = [
+            ['NUMERO DE IDENTIFICACION'],
+            ['PRIMER APELLIDO'],
+            ['SEGUNDO APELLIDO'],
+            ['PRIMER NOMBRE'],
+            ['SEGUNDO NOMBRE'],
+            ['FECHA DE NACIMIENTO'],
+            ['GENERO'],
+            ['CELULAR'],
+            ['CORREO'],
+            ['CIUDAD/REGION'],
+            ['PROFESION', 'PERFIL DEL PROFESIONAL'],
+            ['CURSO'],
+            ['MODALIDAD'],
+            ['RENOVACION'],
+            ['RESPONSABLE VENTA', 'RESPONSABLE'],
+            ['FECHA DE VENTA'],
+            ['VALOR UNITARIO'],
+            ['DESCUENTO'],
+            ['PRECIO NETO'],
+            ['MEDIO DE PAGO'],
+            ['FECHA DE PAGO'],
+            ['ELABORO', 'REALIZADOR'],
+            ['PROCEDENCIA'],
+            ['SEGUIMIENTO POST-VENTA']
+        ]
+        
+        for col in provided_order:
+            for item in col:
+                if item in columns:
+                    values = work_df.pop(item)
+                    temporary_df[col[0]] = values
+                    break
+            else:
+                temporary_df[col[0]] = 'null'
+        
+        return temporary_df

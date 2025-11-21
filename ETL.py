@@ -15,7 +15,7 @@ CCS.set_work_files_per_year() # Create a dictionario with work files per year
 print(CCS.work_files_per_year['2023'])
 
 # cycle for capture each year
-for year in ['2023']:
+for year in ['2023']:#-> 2023 testing <-#
     # cycle to read each document
     for file in CCS.work_files_per_year[year]:
         print(file)
@@ -27,6 +27,12 @@ for year in ['2023']:
         work_df.columns = work_df.columns.str.strip()
         # Remove the first row from work dataframe (docuemnt's index column)
         work_df.drop(work_df.columns[0], axis=1, inplace=True)
+
+        print(work_df.head())
+
+        # Reorganize columns to have a better order
+        work_df = CCS.re_organize_columns(work_df)
+
         
 
-        print(work_df.head)
+        print(work_df.head())
