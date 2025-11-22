@@ -13,9 +13,8 @@ class DataPipeline:
         pass
     
     # Method 
-    def clean_numer(self, work_df, column):
-        work_df[column] = work_df[column].str.replace(r"\D", "", regex=True)
-        return work_df
+    def clean_numer(self, number):
+        return re.sub(r'\D', '', number)
 
     # Method to take configuration from .json file, return all items
     def read_config_json(self):
@@ -33,7 +32,7 @@ class DataPipeline:
     
     # function to find missing information in dataframe, find if any similar data exist to replace in missing one
     # parameter action [R(Raplace with similar values), D(drop missing values), F(fill missing values with null), C(To capitalize the text)]
-    def check_if_empty(self, df, column, id_column):
+    def check_if_empty(self, wrong_df, df, column, id_column, actions): #wdf, df, column, column2, actions
         print('*'*50)
         print(f'Data cleaning for {column} column')
         
@@ -46,47 +45,49 @@ class DataPipeline:
         # This serie will contain values that has a values despite has missing values in another row
         id_serie_with_value = id_without_values[id_without_values.isin(id_with_values)]
         # This serie will contain values that hasn't a value despite has missing values in another row
-        #has_no_val = id_invalid[~id_invalid.isin(id_valid)]
+        id_serie_without_value = id_without_values[~id_without_values.isin(id_with_values)]
 
-       
-        for i, id in id_serie_with_value.items():
-            self.find_replace_value(i, id, df, id_column, column)
-
-    def check_if_empty(wdf, df, column, actions):
-        
         for action in  actions:
+            # Option when want to perform replacement with backup
+            if action == 'R': #-> REPLACEMENT
+                for i, id in id_serie_with_value.items():
+                    self.find_replace_value(i, id, df, id_column, column)
+
             # Option when want to drop a invalid value
-            if action == 'D':
-                for i, id in has_no_val.items():
-                    wdf = pd.concat([wdf, df.loc[[i]]], ignore_index=True)
+            elif action == 'D': #-> DROP
+                for i, id in id_serie_without_value.items():
+                    wrong_df = pd.concat([wrong_df, df.loc[[i]]], ignore_index=True)
                     df = df.drop(i, axis=0)
                     df = df.reset_index()
 
-            # Option when want to perform data filling with null value you can customice it
-            elif action == 'F':
+            # Option to perform data filling with null value you can customice it
+            elif action == 'F': #-> FILL
                 filling = 'null'
-                if not has_value.empty:
+                if not id_serie_with_value.empty:
                     print('Please perform a replacement!')
                 
-                for i, id in has_no_val.items():
+                for i, id in id_serie_without_value.items():
                     df.loc[i, column] = filling
 
             # Option to capitalice the text
-            elif action == 'C':
+            elif action == 'C': #-> CAPITALICE
                 df[column] = df[column].str.capitalize()
 
             # Option to capitalice every first letter
-            elif action == 'T':
+            elif action == 'T': #-> CAPITALICE FIRST LETTER
                 df[column] = df[column].str.title()
             
             # opciton to uppercase the text
-            elif action == 'U':
+            elif action == 'U': #-> UPPER CASE
                 df[column] = df[column].str.upper()
 
             else:
                 print("Error! action parameter wrong.")
 
-        return df, wdf
+        return df, wrong_df
+
+    def replace_text(self, df, column, sre, ifno='null'):
+        df[column] = df[column].map(sre).fillna(ifno)
 
 
 """
@@ -102,6 +103,10 @@ class Project(DataPipeline):
         self.rejected_path = ""
         self.work_folders = []
         self.work_files_per_year = {}
+        self.gender_sre = {
+            'M': 'Masculino',
+            'F': 'Femenino'
+            }
 
     # Getters and Setters
 
