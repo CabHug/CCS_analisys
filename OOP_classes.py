@@ -52,6 +52,42 @@ class DataPipeline:
         for i, id in id_serie_with_value.items():
             self.find_replace_value(i, id, df, id_column, column)
 
+    def check_if_empty(wdf, df, column, actions):
+        
+        for action in  actions:
+            # Option when want to drop a invalid value
+            if action == 'D':
+                for i, id in has_no_val.items():
+                    wdf = pd.concat([wdf, df.loc[[i]]], ignore_index=True)
+                    df = df.drop(i, axis=0)
+                    df = df.reset_index()
+
+            # Option when want to perform data filling with null value you can customice it
+            elif action == 'F':
+                filling = 'null'
+                if not has_value.empty:
+                    print('Please perform a replacement!')
+                
+                for i, id in has_no_val.items():
+                    df.loc[i, column] = filling
+
+            # Option to capitalice the text
+            elif action == 'C':
+                df[column] = df[column].str.capitalize()
+
+            # Option to capitalice every first letter
+            elif action == 'T':
+                df[column] = df[column].str.title()
+            
+            # opciton to uppercase the text
+            elif action == 'U':
+                df[column] = df[column].str.upper()
+
+            else:
+                print("Error! action parameter wrong.")
+
+        return df, wdf
+
 
 """
 This class will contain info related to the CCS_analisys and required methods
