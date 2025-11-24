@@ -15,12 +15,15 @@ CCS.set_work_files_per_year() # Create a dictionario with work files per year
 print(CCS.work_files_per_year['2023'])
 
 # cycle for capture each year
-for year in ['2023']:#-> 2023 testing <-#
+for y in ['2023']:#-> 2023 testing <-#
     # cycle to read each document
-    for file in CCS.work_files_per_year[year]:
-        print(file)
+    for file in CCS.work_files_per_year[y]:
+        print(f"#-> Processing file: {file}")
+        f_year = file.split('_')[1]
+        f_month = CCS.month_is[file.split('_')[2][:-5]]
         # Take info (data_source, year and file) to build the path
-        work_df = pd.read_excel(f'{CCS.get_info_source_path()}/{year}/{file}')
+        work_df = pd.read_excel(f'{CCS.get_info_source_path()}/{y}/{file}')
+        f_year = int(f_year)
 
         # New dataframe to store wrong data from each file
         wrong_df = pd.DataFrame(columns=work_df.columns)
@@ -177,7 +180,7 @@ for year in ['2023']:#-> 2023 testing <-#
         else:
             work_df, wrong_df = CCS.check_if_empty(wrong_df, work_df, follow_up, id_column, ['C','F'])
 
-
+        
 
 
 

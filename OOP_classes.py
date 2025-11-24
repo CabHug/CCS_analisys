@@ -89,6 +89,13 @@ class DataPipeline:
     def replace_text(self, df, column, sre, ifno='null'):
         df[column] = df[column].map(sre).fillna(ifno)
 
+    def store_output_files(self, cleaned_path, work_df, rejected_path, wrong_df, file):
+        work_df.to_excel(cleaned_path+"Cleaned_"+file[:-4]+"xlsx", index=False, engine="openpyxl")
+        print('Archivo guardado!')
+        if not wrong_df.empty:
+            wrong_df.to_excel(rejected_path+"Rejected_"+file[:-4]+"xlsx", index=False, engine="openpyxl")
+            print('Archivo de datos erróneos guardado!')
+
 
 """
 This class will contain info related to the CCS_analisys and required methods
@@ -106,6 +113,11 @@ class Project(DataPipeline):
         self.gender_sre = {
             'M': 'Masculino',
             'F': 'Femenino'
+            }
+        self.month_is = {
+            'ENERO': 1, 'FEBRERO': 2, 'MARZO': 3, 'ABRIL': 4,
+            'MAYO': 5, 'JUNIO': 6, 'JULIO': 7, 'AGOSTO': 8,
+            'SEPTIEMBRE': 9, 'OCTUBRE': 10, 'NOVIEMBRE': 11, 'DICIEMBRE': 12
             }
 
     # Getters and Setters
