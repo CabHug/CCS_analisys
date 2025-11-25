@@ -33,7 +33,6 @@ class DataPipeline:
     # function to find missing information in dataframe, find if any similar data exist to replace in missing one
     # parameter action [R(Raplace with similar values), D(drop missing values), F(fill missing values with null), C(To capitalize the text)]
     def check_if_empty(self, wrong_df, df, column, id_column, actions): #wdf, df, column, column2, actions
-        print('*'*50)
         print(f'Data cleaning for {column} column')
         
         # This mask will return al serie bool with values that being empty or NAN
@@ -57,8 +56,7 @@ class DataPipeline:
             elif action == 'D': #-> DROP
                 for i, id in id_serie_without_value.items():
                     wrong_df = pd.concat([wrong_df, df.loc[[i]]], ignore_index=True)
-                    df = df.drop(i, axis=0)
-                    df = df.reset_index()
+                    df = df.drop(i, axis=0).reset_index(drop=True)
 
             # Option to perform data filling with null value you can customice it
             elif action == 'F': #-> FILL
@@ -91,10 +89,10 @@ class DataPipeline:
 
     def store_output_files(self, cleaned_path, work_df, rejected_path, wrong_df, file):
         work_df.to_excel(cleaned_path+"Cleaned_"+file[:-4]+"xlsx", index=False, engine="openpyxl")
-        print('Archivo guardado!')
+        print('#-> Archivo con datos tratados guardado!')
         if not wrong_df.empty:
             wrong_df.to_excel(rejected_path+"Rejected_"+file[:-4]+"xlsx", index=False, engine="openpyxl")
-            print('Archivo de datos erróneos guardado!')
+            print('#-> Archivo con datos erróneos guardado!')
 
 
 """
@@ -103,7 +101,7 @@ This class will contain info related to the CCS_analisys and required methods
 class Project(DataPipeline):
     def __init__(self):
         self.config = "./Python-analisys/config.json" # Config file
-        self.start_year = "2023" # this 2023 is for testing
+        self.start_year = "2024" # this year match with first data folder
         self.current_year = ""
         self.info_source_path = ""
         self.cleaned_path = ""

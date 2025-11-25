@@ -12,13 +12,14 @@ CCS.set_work_files_per_year() # Create a dictionario with work files per year
 
 
 
-print(CCS.work_files_per_year['2023'])
+print(CCS.work_files_per_year)
 
 # cycle for capture each year
-for y in ['2023']:#-> 2023 testing <-#
-    # cycle to read each document
+for y in CCS.work_files_per_year:#-> start on 2024 <-#
+    # cycle to read and clean each document
     for file in CCS.work_files_per_year[y]:
-        print(f"#-> Processing file: {file}")
+        print('*'*50)
+        print(f"#-> Procesando archivo: {file}")
         f_year = file.split('_')[1]
         f_month = CCS.month_is[file.split('_')[2][:-5]]
         # Take info (data_source, year and file) to build the path
@@ -32,8 +33,6 @@ for y in ['2023']:#-> 2023 testing <-#
         work_df.columns = work_df.columns.str.strip()
         # Remove the first row from work dataframe (docuemnt's index column)
         work_df.drop(work_df.columns[0], axis=1, inplace=True)
-
-        print(work_df.head())
 
         # Reorganize columns to have a better order
         work_df = CCS.re_organize_columns(work_df)
@@ -181,7 +180,9 @@ for y in ['2023']:#-> 2023 testing <-#
             work_df, wrong_df = CCS.check_if_empty(wrong_df, work_df, follow_up, id_column, ['C','F'])
 
         
+        CCS.store_output_files(CCS.cleaned_path, work_df, CCS.rejected_path, wrong_df, file)
+        print('*'*50)
 
-
-
-        print(work_df.head())
+# Join all files to get a fact file
+for y in CCS.work_files_per_year:
+    
