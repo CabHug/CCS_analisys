@@ -88,10 +88,10 @@ class DataPipeline:
         df[column] = df[column].map(sre).fillna(ifno)
 
     def store_output_files(self, cleaned_path, work_df, rejected_path, wrong_df, file):
-        work_df.to_excel(cleaned_path+"Cleaned_"+file[:-4]+"xlsx", index=False, engine="openpyxl")
+        work_df.to_excel(cleaned_path+"/Cleaned_"+file[:-4]+"xlsx", index=False, engine="openpyxl")
         print('#-> Archivo con datos tratados guardado!')
         if not wrong_df.empty:
-            wrong_df.to_excel(rejected_path+"Rejected_"+file[:-4]+"xlsx", index=False, engine="openpyxl")
+            wrong_df.to_excel(rejected_path+"/Rejected_"+file[:-4]+"xlsx", index=False, engine="openpyxl")
             print('#-> Archivo con datos erróneos guardado!')
 
 
@@ -107,6 +107,7 @@ class Project(DataPipeline):
         self.cleaned_path = ""
         self.rejected_path = ""
         self.work_folders = []
+        self.cleaned_work_files = []
         self.work_files_per_year = {}
         self.gender_sre = {
             'M': 'Masculino',
@@ -159,7 +160,7 @@ class Project(DataPipeline):
             return False
         return True
     
-    # Method to get fields from the specified directory (need to specify the years) on var years
+    # Method to get fields from source path (need to specify the years) on var years
     def set_work_files_per_year(self):
         start_year = int(self.start_year)
         current_year = int(self.current_year)
@@ -171,6 +172,15 @@ class Project(DataPipeline):
                     files.append(file)
             self.work_files_per_year[str(start_year)] = files
             start_year += 1
+    
+    # Method to get fields from cleaned_path
+    def set_cleaned_work_files_per_year(self):
+            path = f"{self.cleaned_path}"
+            files = []
+            for file in os.listdir(path):
+                if file.endswith('.xlsm'):
+                    files.append(file)
+            self.cleaned_work_files = files
     
     def re_organize_columns(self, work_df):
         temporary_df = pd.DataFrame()
