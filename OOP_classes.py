@@ -93,6 +93,15 @@ class DataPipeline:
         if not wrong_df.empty:
             wrong_df.to_excel(rejected_path+"/Rejected_"+file[:-4]+"xlsx", index=False, engine="openpyxl")
             print('#-> Archivo con datos erróneos guardado!')
+    
+    def normalize_column(self, raw_df, column, normalized_map):
+        replaced = {}
+        for standar, sinonims in normalized_map.items():
+            for s in sinonims:
+                replaced[s] = standar
+        
+        raw_df[column] = raw_df[column].apply(lambda x : replaced.get(x, x))
+        return raw_df
 
 
 """
@@ -174,13 +183,18 @@ class Project(DataPipeline):
             start_year += 1
     
     # Method to get fields from cleaned_path
-    def set_cleaned_work_files_per_year(self):
-            path = f"{self.cleaned_path}"
-            files = []
-            for file in os.listdir(path):
-                if file.endswith('.xlsm'):
-                    files.append(file)
-            self.cleaned_work_files = files
+    def consolidate_work_files_per_year(self):
+        dfs = []
+        for file in os.listdir(self.cleaned_path):
+            if file.endswith('.xlsx'):
+                file_path = os.path.join(self.cleaned_path, file)
+                print('Leyendo:', file_path)
+                df = pd.read_excel(file_path)
+                dfs.append(df)
+        
+        df_consolidate = pd.concat(dfs, ignore_index=True)
+        df_consolidate.to_csv(f'{self.info_source_path}/consolidate.csv', index=False, encoding="utf-8")
+        print('Archivo consolidado creado con exito!')
     
     def re_organize_columns(self, work_df):
         temporary_df = pd.DataFrame()

@@ -11,6 +11,7 @@ CCS.find_work_foldes() # Set work folders inside data_source folder
 CCS.set_work_files_per_year() # Create a dictionario with work files per year
 #print(CCS.work_files_per_year)
 
+
 # cycle for capture each year
 for y in CCS.work_files_per_year:#-> start on 2024 <-#
     # cycle to read and clean each document
@@ -180,8 +181,6 @@ for y in CCS.work_files_per_year:#-> start on 2024 <-#
         CCS.store_output_files(CCS.cleaned_path, work_df, CCS.rejected_path, wrong_df, file)
         print('*'*50)
 
-CCS.set_cleaned_work_files_per_year()
-print(CCS.cleaned_work_files)
-# Join all files to get the fact sales file
-for y in CCS.cleaned_work_files:
-    print(y)
+CCS.consolidate_work_files_per_year()
+
+
