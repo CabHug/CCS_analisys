@@ -1,6 +1,7 @@
 import pandas as pd
 
 from OOP_classes import *
+from normaize_map import *
 
 # Main object definition of CCS project
 CCS = Project()
@@ -29,6 +30,7 @@ for y in CCS.work_files_per_year:#-> start on 2024 <-#
 
         # Cleaning headers of hidden spaces
         work_df.columns = work_df.columns.str.strip()
+
         # Remove the first row from work dataframe (docuemnt's index column)
         work_df.drop(work_df.columns[0], axis=1, inplace=True)
 
@@ -184,3 +186,38 @@ for y in CCS.work_files_per_year:#-> start on 2024 <-#
 CCS.consolidate_work_files_per_year()
 
 
+# NORMALIZE CATEGORIES IN A SPECIFIC COLUMN
+raw_consl_df = pd.read_csv(f'{CCS.info_source_path}/consolidate.csv')
+raw_consl_df.columns = raw_consl_df.columns.str.replace(' ', '_')
+NM = NormalMap()
+
+pd.set_option("display.max_rows", None)  # muestra todas las filas
+print(raw_consl_df['PROFESION'].value_counts())
+
+raw_consl_df = CCS.normalize_column(raw_consl_df, 'PROFESION', NM.professions_map)
+
+print(raw_consl_df['PROFESION'].value_counts())
+print("*"*50)
+print(raw_consl_df['ELABORO'].value_counts())
+
+raw_consl_df = CCS.normalize_column(raw_consl_df, 'ELABORO', NM.created_by_map)
+
+print(raw_consl_df['ELABORO'].value_counts())
+print("*"*50)
+print(raw_consl_df['RESPONSABLE_VENTA'].value_counts())
+
+raw_consl_df = CCS.normalize_column(raw_consl_df, 'RESPONSABLE_VENTA', NM.salesperson_map)
+
+print(raw_consl_df['RESPONSABLE_VENTA'].value_counts())
+print("*"*50)
+print(raw_consl_df['MEDIO_DE_PAGO'].value_counts())
+
+raw_consl_df = CCS.normalize_column(raw_consl_df, 'MEDIO_DE_PAGO', NM.payment_method_map)
+
+print(raw_consl_df['MEDIO_DE_PAGO'].value_counts())
+print("*"*50)
+print(raw_consl_df['MODALIDAD'].value_counts())
+
+raw_consl_df = CCS.normalize_column(raw_consl_df, 'MODALIDAD', NM.modalidad_map)
+
+print(raw_consl_df['MODALIDAD'].value_counts())
