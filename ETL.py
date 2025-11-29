@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 
 from OOP_classes import *
 from normaize_map import *
@@ -183,41 +184,50 @@ for y in CCS.work_files_per_year:#-> start on 2024 <-#
         CCS.store_output_files(CCS.cleaned_path, work_df, CCS.rejected_path, wrong_df, file)
         print('*'*50)
 
+# CREATE CONSOLIDATE FILE
 CCS.consolidate_work_files_per_year()
 
-
 # NORMALIZE CATEGORIES IN A SPECIFIC COLUMN
-raw_consl_df = pd.read_csv(f'{CCS.info_source_path}/consolidate.csv')
+raw_consl_df = pd.read_csv(f'{CCS.info_source_path}/tmp_consolidate.csv')
 raw_consl_df.columns = raw_consl_df.columns.str.replace(' ', '_')
 NM = NormalMap()
 
 pd.set_option("display.max_rows", None)  # muestra todas las filas
-print(raw_consl_df['PROFESION'].value_counts())
 
+print("*"*50)
+print("## ​✍️  NORMALIZANDO CATEGORIAS SEGUN COLUMNA ##")
+print("*"*50)
+
+print('Numero de categorias antes de normalizar PROFESION: ', raw_consl_df['PROFESION'].nunique())
 raw_consl_df = CCS.normalize_column(raw_consl_df, 'PROFESION', NM.professions_map)
+print('Numero de categorias despues de normalizar PROFESION: ',raw_consl_df['PROFESION'].nunique())
+print("*" * 50)
 
-print(raw_consl_df['PROFESION'].value_counts())
-print("*"*50)
-print(raw_consl_df['ELABORO'].value_counts())
-
+print("Numero de categorias antes de normalizar ELABORO: ", raw_consl_df['ELABORO'].nunique())
 raw_consl_df = CCS.normalize_column(raw_consl_df, 'ELABORO', NM.created_by_map)
+print("Numero de categorias despues de normalizar ELABORO: ", raw_consl_df['ELABORO'].nunique())
+print("*" * 50)
 
-print(raw_consl_df['ELABORO'].value_counts())
-print("*"*50)
-print(raw_consl_df['RESPONSABLE_VENTA'].value_counts())
-
+print("Numero de categorias antes de normalizar RESPONSABLE_VENTA: ", raw_consl_df['RESPONSABLE_VENTA'].nunique())
 raw_consl_df = CCS.normalize_column(raw_consl_df, 'RESPONSABLE_VENTA', NM.salesperson_map)
+print("Numero de categorias despues de normalizar RESPONSABLE_VENTA: ", raw_consl_df['RESPONSABLE_VENTA'].nunique())
+print("*" * 50)
 
-print(raw_consl_df['RESPONSABLE_VENTA'].value_counts())
-print("*"*50)
-print(raw_consl_df['MEDIO_DE_PAGO'].value_counts())
-
+print("Numero de categorias antes de normalizar MEDIO_DE_PAGO: ", raw_consl_df['MEDIO_DE_PAGO'].nunique())
 raw_consl_df = CCS.normalize_column(raw_consl_df, 'MEDIO_DE_PAGO', NM.payment_method_map)
+print("Numero de categorias despues de normalizar MEDIO_DE_PAGO: ", raw_consl_df['MEDIO_DE_PAGO'].nunique())
+print("*" * 50)
 
-print(raw_consl_df['MEDIO_DE_PAGO'].value_counts())
-print("*"*50)
-print(raw_consl_df['MODALIDAD'].value_counts())
-
+print("Numero de categorias antes de normalizar MODALIDAD: ", raw_consl_df['MODALIDAD'].nunique())
 raw_consl_df = CCS.normalize_column(raw_consl_df, 'MODALIDAD', NM.modalidad_map)
+print("Numero de categorias despues de normalizar MODALIDAD: ", raw_consl_df['MODALIDAD'].nunique())
+print("*" * 50)
 
-print(raw_consl_df['MODALIDAD'].value_counts())
+raw_consl_df.to_csv(f'{CCS.info_source_path}/consolidate_normalized.csv')
+
+path = f'{CCS.info_source_path}/tmp_consolidate.csv'
+if os.path.exists(path):
+    os.remove(path)
+    print('✅​ Archivo temporal normalizado eliminado!')
+else:
+    print('❌​ No se encontro ningun archivo temporal!')

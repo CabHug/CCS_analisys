@@ -193,8 +193,8 @@ class Project(DataPipeline):
                 dfs.append(df)
         
         df_consolidate = pd.concat(dfs, ignore_index=True)
-        df_consolidate.to_csv(f'{self.info_source_path}/consolidate.csv', index=False, encoding="utf-8")
-        print('Archivo consolidado creado con exito!')
+        df_consolidate.to_csv(f'{self.info_source_path}/tmp_consolidate.csv', index=False, encoding="utf-8")
+        print('​​✅​ Archivo consolidado creado con exito!')
     
     def re_organize_columns(self, work_df):
         temporary_df = pd.DataFrame()

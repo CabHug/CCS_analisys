@@ -396,3 +396,5 @@ class NormalMap:
                     "Capacitacion", "Colaborador", "Temporal"
                 ]
             }
+
+        
