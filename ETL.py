@@ -10,7 +10,7 @@ CCS = Project()
 CCS.set_current_year() # Set current year in object attributes
 CCS.read_config_json() # Set paths required for Extract data files
 CCS.find_work_foldes() # Set work folders inside data_source folder
-CCS.set_work_files_per_year() # Create a dictionario with work files per year
+CCS.set_work_files_per_year() # Create a dictionario with work files per year (getting raw data)
 #print(CCS.work_files_per_year)
 
 
@@ -197,6 +197,11 @@ pd.set_option("display.max_rows", None)  # muestra todas las filas
 print("*"*50)
 print("## ​✍️  NORMALIZANDO CATEGORIAS SEGUN COLUMNA ##")
 print("*"*50)
+
+print('Numero de categorias antes de normalizar CURSO: ', raw_consl_df['CURSO'].nunique())
+raw_consl_df = CCS.normalize_column(raw_consl_df, 'CURSO', NM.courses_map)
+print('Numero de categorias despues de normalizar CURSO: ',raw_consl_df['CURSO'].nunique())
+print("*" * 50)
 
 print('Numero de categorias antes de normalizar PROFESION: ', raw_consl_df['PROFESION'].nunique())
 raw_consl_df = CCS.normalize_column(raw_consl_df, 'PROFESION', NM.professions_map)

@@ -389,12 +389,204 @@ class NormalMap:
             }
 
         self.modalidad_map = {
-                "Actualizacion": [
-                    "Renovacion","Renovación"
-                ],
-                "Capacitación": [
-                    "Capacitacion", "Colaborador", "Temporal"
-                ]
+            "Actualizacion": [
+                "Renovacion","Renovación" ],
+            "Capacitación": [
+                "Capacitacion", "Colaborador", "Temporal"]
             }
+
+        self.courses_map = {
+            # --- Llaves Originales Solicitadas ---
+            "Acls": [
+                "Acls"
+            ],
+            "Aclsn": [
+                "Aclsn"
+            ],
+            "Admon de medicamentos": [
+                "Admon de medicamentos"
+            ],
+            "Adulto mayor": [
+                "Adulto mayor"
+            ],
+            "Aiepi": [
+                "Aiepi"
+            ],
+            "Atención pre-hospitalaria": [
+                "Atención pre-hospitalaria",
+                "Mision medica"  # Relacionado con transporte/atención externa
+            ],
+            "Bls": [
+                "Bls",
+                "Rcp" # RCP suele ser parte de BLS, si prefieres separado, muévelo a una nueva llave
+            ],
+            "Brigada": [
+                "Brigada",
+                "Comando de incidentes"
+            ],
+            "Camillero": [
+                "Camillero"
+            ],
+            "Citología": [
+                "Citologia"
+            ],
+            "Clínica de heridas": [
+                "Clínica de heridas",
+                "Manejo de heridas"
+            ],
+            "Código verde": [
+                "Código verde"
+            ],
+            "Conflicto armado": [
+                "Conflicto armado"
+            ],
+            "Discapacidad": [
+                "Discapacidad",
+                "Atencion a personas con discapacidad",
+                "Discapacidad de riesgos"
+            ],
+            "Donante": [
+                "Donante",
+                "Cuidado al paciente donante"
+            ],
+            "Duelo": [
+                "Duelo"
+            ],
+            "Humanización": [
+                "Humanización",
+                "Humanizacion",
+                "Atencion al cliente", # Relacionado con trato humano
+                "Atencion al usuario"
+            ],
+            "Iami": [
+                "Iami",
+                "Lactante",
+                "Plan decenal de lactancia materna y alimentación complementaria",
+                "Neonatal", # Agrupado aquí por afinidad materno-infantil
+                "Desnutricion"
+            ],
+            "Igualdad de género": [
+                "Igualdad de género",
+                "Igualdad de genero",
+                "Lgbti"
+            ],
+            "Implante": [
+                "Implante"
+            ],
+            "Manejo defensivo": [
+                "Manejo defensivo",
+                "Seguridad vial"
+            ],
+            "Manipulación de alimentos": [
+                "Manipulación de alimentos",
+                "Manipulacion",
+                "Manipulacion de alimentos"
+            ],
+            "Ove": [
+                "Ove"
+            ],
+            "Paciente": [
+                "Paciente",
+                "Adulto" # "Adulto" a secas suele referirse al paciente adulto general
+            ],
+            "Pai": [
+                "Pai",
+                "Vacunacion" # PAI es el programa de vacunación
+            ],
+            "Paliativos": [
+                "Paliativos"
+            ],
+            "Poct": [
+                "Poct"
+            ],
+            "Primeros auxilios": [
+                "Primeros auxilios",
+                "Primer respondiente",
+                "Primeros auxilios para conductor de emergencias",
+                "Stop the bleed"
+            ],
+            "Primeros auxilios p": [
+                "Primeros auxilios p" # Generalmente Psicológicos
+            ],
+            "Químicos": [
+                "Químicos",
+                "Quimicos",
+                "Sustancias"
+            ],
+            "Residuos": [
+                "Residuos"
+            ],
+            "Salud mental": [
+                "Salud mental",
+                "Consumo", # Refiriéndose a consumo de sustancias/salud mental
+                "Tabaco"
+            ],
+            "Toma de muestras": [
+                "Toma de muestras"
+            ],
+            "Uci": [
+                "Uci"
+            ],
+            "Violencia de género": [
+                "Violencia de género",
+                "Violencia de genero"
+            ],
+            "Violencia sexual": [
+                "Violencia sexual"
+            ],
+
+            # --- Nuevas Llaves Creadas (No estaban en tu lista original) ---
+            "Atención Primaria (PyP)": [
+                "Aps",
+                "Atencion primaria",
+                "Pyp",
+                "Pym"
+            ],
+            "Buenas Prácticas": [
+                "Buenas practicas"
+            ],
+            "Código Rojo": [
+                "Codigo rojo",
+                "Codigo rojo y emergencias"
+            ],
+            "Consulta Externa": [
+                "Consulta externa"
+            ],
+            "Covid": [
+                "Covid"
+            ],
+            "Dea": [
+                "Dea",
+                "Uso y manejo del dea"
+            ],
+            "Exógena": [
+                "Exogena"
+            ],
+            "Lavado de manos": [
+                "Lavado de manos"
+            ],
+            "Liderazgo": [
+                "Perfeccionamiento de liderazgo básico"
+            ],
+            "Pals": [
+                "Pals" # Pediatric Advanced Life Support (Distinto a ACLS)
+            ],
+            "Radioprotección": [
+                "Radioproteccion",
+                "Radiologica"
+            ],
+            "Salvamento Acuático": [
+                "Salvamento acuatico",
+                "Salvamento acuatico "
+            ],
+            "Triage": [
+                "Triage"
+            ],
+            "Vectores": [
+                "Vectores"
+            ]
+        }
+        
+
 
         

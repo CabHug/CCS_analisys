@@ -113,6 +113,7 @@ class Project(DataPipeline):
         self.start_year = "2024" # this year match with first data folder
         self.current_year = ""
         self.info_source_path = ""
+        self.db_tables = ""
         self.cleaned_path = ""
         self.rejected_path = ""
         self.work_folders = []
@@ -159,6 +160,7 @@ class Project(DataPipeline):
         self.info_source_path = config['info_source']
         self.cleaned_path = config['cleaned']
         self.rejected_path = config['rejected']
+        self.db_tables = config['tables']
         return True
 
     # Method to get work folder per yer
