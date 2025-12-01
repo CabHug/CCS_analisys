@@ -172,15 +172,19 @@ def mapear_categorias(df_ventas, df_categorias_lookup, columna_categoria):
 
 raw_conslidate_df = pd.read_csv(f'{CCS.info_source_path}/consolidate_normalized.csv')
 work_tables = [name for name in os.listdir(CCS.db_tables)]
+
 for table in work_tables:
-    category = table[:-5]
+    print(table)
+    if table == 'CLIENTES.xlsx':
+        continue
+    category = str(table[:-5])
     print(f'🤖 ID normalizacion para la categoria: {category}')
-    df_categorias_lookup = pd.read_csv(f'{CCS.db_tables}/{table}')
+    df_categorias_lookup = pd.read_excel(f'{CCS.db_tables}/{table}')
     try:
         df_ventas_mapeadas = mapear_categorias(
             raw_conslidate_df.copy(),
             df_categorias_lookup.copy(), 
-            'CATEGORIA_TEXTO'
+            category
         )
         print("\n🤖✅ Mapeo completado exitosamente.")
         print(df_ventas_mapeadas)
