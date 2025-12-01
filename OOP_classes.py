@@ -80,7 +80,7 @@ class DataPipeline:
                 df[column] = df[column].str.upper()
 
             else:
-                print("Error! action parameter wrong.")
+                print("🤖❌ Error! action parameter wrong.")
 
         return df, wrong_df
 
@@ -89,10 +89,10 @@ class DataPipeline:
 
     def store_output_files(self, cleaned_path, work_df, rejected_path, wrong_df, file):
         work_df.to_excel(cleaned_path+"/Cleaned_"+file[:-4]+"xlsx", index=False, engine="openpyxl")
-        print('#-> Archivo con datos tratados guardado!')
+        print('🤖​✅​​​ Archivo con datos tratados guardado!')
         if not wrong_df.empty:
             wrong_df.to_excel(rejected_path+"/Rejected_"+file[:-4]+"xlsx", index=False, engine="openpyxl")
-            print('#-> Archivo con datos erróneos guardado!')
+            print('🤖​✅​ Archivo con datos erróneos guardado!')
     
     def normalize_column(self, raw_df, column, normalized_map):
         replaced = {}
@@ -102,6 +102,72 @@ class DataPipeline:
         
         raw_df[column] = raw_df[column].apply(lambda x : replaced.get(x, x))
         return raw_df
+    
+## ---------------------------------------------------------------------------------
+    """
+    ##  Parameters  ##
+    columnas_datos: lista que contiene los parametros de los cuales voy a extraer informacion
+    id_column: Columna referencias, sera el id de los registro que busco dejar como unicos
+    raw_consl_df: corresponde al dataframe que contiene la informacion
+    ruta_archivo: contiene la ruta de la nueva tabla
+    index: parametro necesario para indicar al script cual columna es el index
+    """
+    def table_creation(self, raw_consl_df, columnas_datos, id_column, ruta_archivo, index):
+        print(f"🤖​ Creacion tabla {id_column} 🦾✍️​")
+        # --- PARTE 1: SELECCIONAR LA FILA CON MÁS DATOS ---
+
+        # Calculamos cuántos datos NO nulos tiene cada fila en las columnas de interés
+        # Creamos una columna temporal 'calidad_datos'
+        raw_consl_df['calidad_datos'] = raw_consl_df[columnas_datos].notna().sum(axis=1)
+
+        # Ordenamos: Primero por ID, luego por 'calidad_datos' de mayor a menor (descending)
+        # Así la fila con más datos queda arriba para cada ID
+        df_sorted = raw_consl_df.sort_values(
+            by=[id_column, 'calidad_datos'], 
+            ascending=[True, False]
+        )
+
+        # Eliminamos duplicados por ID, quedándonos solo con la primera (la que tiene más datos)
+        df_candidatos = df_sorted.drop_duplicates(subset=[id_column], keep='first')
+
+        # Limpiamos: Seleccionamos solo las columnas finales y reseteamos el índice
+        cols_finales = [id_column] + columnas_datos
+        df_candidatos = df_candidatos[cols_finales].reset_index(drop=True)
+
+
+        # --- PARTE 2: GESTIÓN DEL ARCHIVO EXCEL (INCREMENTAL) ---
+        if os.path.exists(ruta_archivo):
+            print("🤖​ El archivo ya existe. Verificando registros nuevos...")
+            
+            # Leemos el archivo existente
+            df_existente = pd.read_excel(ruta_archivo, index_col=index)
+            
+            # Obtenemos los IDs que ya existen para no duplicarlos ni modificarlos
+            ids_existentes = set(df_existente[id_column].astype(str))
+            
+            # Filtramos: Solo nos quedamos con los IDs de df_candidatos que NO están en el Excel
+            # Convertimos a string para asegurar comparación correcta
+            nuevos_registros = df_candidatos[~df_candidatos[id_column].astype(str).isin(ids_existentes)]
+            
+            if not nuevos_registros.empty:
+                # Concatenamos los antiguos con los nuevos
+                df_final = pd.concat([df_existente, nuevos_registros], ignore_index=True)
+                # Guardamos todo el conjunto
+                df_final.to_excel(ruta_archivo, index=True, index_label=index)
+                print(f"🤖​ Se agregaron {len(nuevos_registros)} nuevos clientes.")
+                df_result = df_final # Para que puedas imprimir el resultado final si quieres
+            else:
+                print("🤖​ No hay clientes nuevos para agregar.")
+                df_result = df_existente
+
+        else:
+            print("🤖​ El archivo no existe. Creando uno nuevo...")
+            df_candidatos.to_excel(ruta_archivo, index=True, index_label=index)
+            df_result = df_candidatos
+
+        print("*"*50)
+        print(df_result.head(4))
+## ---------------------------------------------------------------------------------
 
 
 """
@@ -190,7 +256,7 @@ class Project(DataPipeline):
         for file in os.listdir(self.cleaned_path):
             if file.endswith('.xlsx'):
                 file_path = os.path.join(self.cleaned_path, file)
-                print('Leyendo:', file_path)
+                print('🤖​ Leyendo:', file_path)
                 df = pd.read_excel(file_path)
                 dfs.append(df)
         
@@ -198,6 +264,7 @@ class Project(DataPipeline):
         df_consolidate.to_csv(f'{self.info_source_path}/tmp_consolidate.csv', index=False, encoding="utf-8")
         print('​​✅​ Archivo consolidado creado con exito!')
     
+    # This method creates the column data structure for cosolidate sales file
     def re_organize_columns(self, work_df):
         temporary_df = pd.DataFrame()
         columns = work_df.columns.tolist()
@@ -212,7 +279,7 @@ class Project(DataPipeline):
             ['GENERO'],
             ['CELULAR'],
             ['CORREO'],
-            ['CIUDAD/REGION'],
+            ['CIUDAD_REGION'],
             ['PROFESION', 'PERFIL DEL PROFESIONAL'],
             ['CURSO'],
             ['MODALIDAD'],

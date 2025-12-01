@@ -195,7 +195,7 @@ NM = NormalMap()
 pd.set_option("display.max_rows", None)  # muestra todas las filas
 
 print("*"*50)
-print("## ​✍️  NORMALIZANDO CATEGORIAS SEGUN COLUMNA ##")
+print("## ​🤖 NORMALIZANDO CATEGORIAS SEGUN COLUMNA 🦾✍️ ##")
 print("*"*50)
 
 print('Numero de categorias antes de normalizar CURSO: ', raw_consl_df['CURSO'].nunique())
@@ -233,6 +233,6 @@ raw_consl_df.to_csv(f'{CCS.info_source_path}/consolidate_normalized.csv')
 path = f'{CCS.info_source_path}/tmp_consolidate.csv'
 if os.path.exists(path):
     os.remove(path)
-    print('✅​ Archivo temporal normalizado eliminado!')
+    print('🤖✅​ Archivo temporal normalizado eliminado!')
 else:
-    print('❌​ No se encontro ningun archivo temporal!')
+    print('🤖❌​ No se encontro ningun archivo temporal!')

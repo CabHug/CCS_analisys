@@ -228,29 +228,21 @@ class NormalMap:
             ],
 
             # --- INGENIERÍAS ---
-            "Ingeniería de Sistemas y Electrónica": [
-                "Tecnico en sistemas",
+            "Ingeniero (Genérico)": [
+                "Ingeniero",
+               "Tecnico en sistemas",
                 "Ingeniero de sistemas",
                 "Ing de sistemas",
                 "Tecnico integral en sistemas",
                 "Ingeniero electronico",
                 "Ingeniera electronica",
-                "Ing mecatronico"
-            ],
-            "Ingeniería Industrial": [
-                "Ingeniero industrial"
-            ],
-            "Ingeniería Ambiental y Agroforestal": [
+                "Ing mecatronico",
+                "Ingeniero industrial",
                 "Ingeniera agroforesteal",
                 "Ingeniero agroforestal",
-                "Ingeniera ambiental"
-            ],
-            "Ingeniería Biomédica": [
+                "Ingeniera ambiental",
                 "Biomedico",
                 "Ingeniero biomedico"
-            ],
-            "Ingeniero (Genérico)": [
-                "Ingeniero"
             ],
 
             # --- DERECHO Y SOCIALES ---
