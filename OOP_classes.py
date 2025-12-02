@@ -279,7 +279,7 @@ class Project(DataPipeline):
             ['GENERO'],
             ['CELULAR'],
             ['CORREO'],
-            ['CIUDAD_REGION'],
+            ['CIUDAD REGION', 'CIUDAD/REGION'],
             ['PROFESION', 'PERFIL DEL PROFESIONAL'],
             ['CURSO'],
             ['MODALIDAD'],

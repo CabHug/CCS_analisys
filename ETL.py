@@ -85,7 +85,7 @@ for y in CCS.work_files_per_year:#-> start on 2024 <-#
         mail = next(headListIter)
         work_df[mail] = work_df[mail].fillna('null')
 
-        # 'CIUDAD/REGION' new column added on data frame
+        # 'CIUDAD_REGION' new column added on data frame
         city = next(headListIter)
         if (work_df[city]=='null').all():
             work_df[city] = 'Pasto - Nariño'  # Default value if all are NaN
