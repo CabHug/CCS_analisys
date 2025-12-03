@@ -154,10 +154,10 @@ class DataPipeline:
                 df_final = pd.concat([df_existente, nuevos_registros], ignore_index=True)
                 # Guardamos todo el conjunto
                 df_final.to_excel(ruta_archivo, index=True, index_label=index)
-                print(f"🤖​ Se agregaron {len(nuevos_registros)} nuevos clientes.")
+                print(f"🤖​ Se agregaron {len(nuevos_registros)} nuevos registros.")
                 df_result = df_final # Para que puedas imprimir el resultado final si quieres
             else:
-                print("🤖​ No hay clientes nuevos para agregar.")
+                print("🤖​ No hay registros nuevos para agregar.")
                 df_result = df_existente
 
         else:
