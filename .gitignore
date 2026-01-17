@@ -1,7 +1,4 @@
 # Folders with sensitive information about the customers
-data_source/
-Power_BI_analisys/
-DB_tables/
 
 # Ignore JSON files
 *.json
@@ -15,3 +12,4 @@ DB_tables/
 # Ignore Excel files
 *.xls
 *.xlsx
+*.xlsm
