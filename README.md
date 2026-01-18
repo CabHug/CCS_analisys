@@ -1,9 +1,11 @@
 # CCS analisys
 
-This proyect generate the tables that build the data base of CCS busness,
+This project generate the tables that build the data base of CCS busness,
 The data source will be stored in data source folder, each year will has it own folder
 (i.e. 2026) the document of the month will be stored there with the next format
-CCS_YYYY_Month.xlsm, the proyect has thre main scripts
+CCS_YYYY_Month.xlsm, the proyect has thre main 
+
+This project is part of the data driven transition on CCS
 
 ## 1. ETL.py
 This script takes the data directly from source file, add new columns, complete missing data
