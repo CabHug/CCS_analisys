@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 
-from OOP_classes import *
+from OOP_classes import Project
 
 CCS = Project()
 # Strating with CCS object configuration

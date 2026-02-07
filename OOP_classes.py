@@ -69,11 +69,15 @@ class DataPipeline:
 
             # Option to capitalice the text
             elif action == 'C': #-> CAPITALICE
-                df[column] = df[column].str.capitalize()
+                #df[column] = df[column].str.capitalize()
+                df[column] = df[column].astype(str).str.capitalize()
+
 
             # Option to capitalice every first letter
             elif action == 'T': #-> CAPITALICE FIRST LETTER
-                df[column] = df[column].str.title()
+                #df[column] = df[column].str.title()
+                df[column] = df[column].astype(str).str.title()
+
             
             # opciton to uppercase the text
             elif action == 'U': #-> UPPER CASE
@@ -175,7 +179,7 @@ This class will contain info related to the CCS_analisys and required methods
 """
 class Project(DataPipeline):
     def __init__(self):
-        self.config = "./Python-analisys/config.json" # Config file
+        self.config = "./config.json" # Config file
         self.start_year = "2024" # this year match with first data folder
         self.current_year = ""
         self.info_source_path = ""

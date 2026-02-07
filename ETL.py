@@ -1,8 +1,8 @@
 import pandas as pd
 import os
 
-from OOP_classes import *
-from normaize_map import *
+from OOP_classes import Project
+from normaize_map import NormalMap
 
 # Main object definition of CCS project
 CCS = Project()
