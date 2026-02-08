@@ -43,8 +43,8 @@ for y in CCS.work_files_per_year:#-> start on 2024 <-#
 
          # 'NUMERO DE IDENTIFICACION' FIELD
         id_column = next(headListIter)
-        work_df[id_column] = work_df[id_column].astype('str').apply(lambda num : CCS.clean_numer(num))
-        work_df = work_df.dropna(subset=id_column)
+        work_df[id_column] = work_df[id_column].apply(lambda num : CCS.clean_numer(num))
+        work_df = work_df.dropna(subset=[id_column])
         work_df = work_df[work_df[id_column].apply(lambda x : str(x).strip() !='')]
 
         # 'PRIMER APELLIDO' FIELD
@@ -72,22 +72,24 @@ for y in CCS.work_files_per_year:#-> start on 2024 <-#
 
         # 'GENERO' FIELD
         gender = next(headListIter)
-        work_df, wrong_df = CCS.check_if_empty(wrong_df, work_df, gender, id_column, ['R','F'])
-        CCS.replace_text(work_df, gender, CCS.gender_sre)
+        #work_df, wrong_df = CCS.check_if_empty(wrong_df, work_df, gender, id_column, ['R','F'])
+        #CCS.replace_text(work_df, gender, CCS.gender_sre)
+        work_df[gender] = work_df[gender].astype(str).str.strip() # Limpia espacios
+        CCS.replace_text(work_df, gender, CCS.gender_sre, ifno=None) # ifno=None para Postgres
 
         # 'CELULAR' FIELD
         phone = next(headListIter)
-        work_df[phone] = work_df[phone].astype(str).str.replace(" ", "", regex=False)
+        work_df[phone] = work_df[phone].apply(lambda x: CCS.clean_numer(x)) 
         work_df, wrong_df = CCS.check_if_empty(wrong_df, work_df, phone, id_column, ['R'])
-        work_df[phone] = work_df[phone].fillna('3000000000')
+        work_df[phone] = work_df[phone].replace('', '1111111111').fillna('1111111111')
 
         # 'CORREO' new column added on data frame
         mail = next(headListIter)
-        work_df[mail] = work_df[mail].fillna('null')
+        work_df[mail] = work_df[mail].fillna(None)
 
         # 'CIUDAD_REGION' new column added on data frame
         city = next(headListIter)
-        if (work_df[city]=='null').all():
+        if work_df[city].isnull().all():
             work_df[city] = 'Pasto - Nariño'  # Default value if all are NaN
         else:
             work_df[city].fillna('Pasto - Nariño', inplace=True)
@@ -102,14 +104,14 @@ for y in CCS.work_files_per_year:#-> start on 2024 <-#
 
         # 'MODALIDAD' FIELD
         modality = next(headListIter)
-        if (work_df[modality]=='null').all():
+        if work_df[modality].isnull().all():
             work_df[modality] = 'Virtual asincrónica'
         else:
             work_df, wrong_df = CCS.check_if_empty(wrong_df, work_df, modality, id_column, ['R','C','F'])
 
         # 'RENOVACION' new column added on data frame
         renew = next(headListIter)
-        if (work_df[renew]=='null').all():
+        if work_df[renew].isnull().all():
             work_df[renew] = 'No'
         else:
             work_df, wrong_df = CCS.check_if_empty(wrong_df, work_df, renew, id_column, ['R','C','F'])
@@ -132,22 +134,24 @@ for y in CCS.work_files_per_year:#-> start on 2024 <-#
 
         # 'VALOR UNITARIO' FIELD
         unit_value = next(headListIter)
-        work_df[unit_value] = pd.to_numeric(work_df[unit_value], errors='coerce')
+        #work_df[unit_value] = pd.to_numeric(work_df[unit_value], errors='coerce')
+        work_df[unit_value] = pd.to_numeric(work_df[unit_value], errors='coerce').fillna(0)
         work_df, wrong_df = CCS.check_if_empty(wrong_df, work_df, unit_value, course, ['R'])
 
         # 'DESCUENTO' new column added on data frame
         discount = next(headListIter)
-        if (work_df[discount]=='null').all():
+        if work_df[discount].isnull().all():
             work_df[discount] = 'Sin descuento'
         else:
             work_df, wrong_df = CCS.check_if_empty(wrong_df, work_df, discount, id_column, ['R','C','F'])
 
         # 'PRECIO NETO' new column added on data frame
         net_price = next(headListIter)
-        if (work_df[net_price]=='null').all():
+        if work_df[net_price].isnull().all():
             work_df[net_price] = work_df[unit_value]
         else:
-            work_df[unit_value] = pd.to_numeric(work_df[unit_value], errors='coerce')
+            #work_df[unit_value] = pd.to_numeric(work_df[unit_value], errors='coerce')
+            work_df[net_price] = pd.to_numeric(work_df[net_price], errors='coerce').fillna(0)
             work_df, wrong_df = CCS.check_if_empty(wrong_df, work_df, net_price, id_column, ['R'])
 
         # 'MEDIO DE PAGO' FIELD
@@ -164,19 +168,21 @@ for y in CCS.work_files_per_year:#-> start on 2024 <-#
 
         # 'ELABORO' FIELD
         maker = next(headListIter)
+        #work_df, wrong_df = CCS.check_if_empty(wrong_df, work_df, maker, id_column, ['R','T','F'])
+        work_df[maker] = work_df[maker].astype(str).str.strip().replace(['nan', 'None', 'null'], None)
         work_df, wrong_df = CCS.check_if_empty(wrong_df, work_df, maker, id_column, ['R','T','F'])
 
         # 'PROCEDENCIA' new column added on data frame
         origin = next(headListIter)
-        if (work_df[origin]=='null').all():
+        if work_df[origin].isnull().all():
             work_df[origin] = 'Facebook'
         else:
             work_df, wrong_df = CCS.check_if_empty(wrong_df, work_df, origin, id_column, ['R','C','F'])
 
         # 'SEGUIMIENTO POST-VENTA' new column added on data frame
         follow_up = next(headListIter)
-        if (work_df[follow_up]=='null').all():
-            work_df[follow_up] = 'null'
+        if work_df[follow_up].isnull().all():
+            work_df[follow_up] = None
         else:
             work_df, wrong_df = CCS.check_if_empty(wrong_df, work_df, follow_up, id_column, ['C','F'])
 

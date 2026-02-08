@@ -1,7 +1,6 @@
 import pandas as pd
-import os
-
 from OOP_classes import Project
+
 
 CCS = Project()
 # Strating with CCS object configuration
@@ -65,7 +64,7 @@ columnas_datos = []
 ruta_archivo = f'{CCS.db_tables}/CIUDAD_REGION.xlsx'
 CCS.table_creation(raw_consl_df, columnas_datos, 'CIUDAD_REGION', ruta_archivo, 'CIUDAD_REGION_ID')
 
-## CREACION DE TABLA CIUDAD_REGION
+## CREACION DE TABLA DESCUENTO
 columnas_datos = []
 ruta_archivo = f'{CCS.db_tables}/DESCUENTO.xlsx'
 CCS.table_creation(raw_consl_df, columnas_datos, 'DESCUENTO', ruta_archivo, 'DESCUENTO_ID')
@@ -86,6 +85,12 @@ def mapear_categorias_corregida(df_ventas: pd.DataFrame,
     # es la misma columna de categorías (comportamiento habitual).
     if columna_a_modificar is None:
         columna_a_modificar = columna_categoria
+
+    # LIMPIEZA PRE-MAPEO: Aseguramos que ambos lados hablen el mismo idioma
+    # Si estamos mapeando el ID de identificación
+    if "NUMERO_DE_IDENTIFICACION" in [columna_categoria, columna_a_modificar]:
+        df_ventas[columna_a_modificar] = df_ventas[columna_a_modificar].apply(lambda x: CCS.clean_numer(x))
+        df_categorias_lookup[columna_categoria] = df_categorias_lookup[columna_categoria].apply(lambda x: CCS.clean_numer(x))
 
     # 1. Crear el mapa de Series: Categoría -> ID
     # Aquí es donde se establece que la categoría es el índice (la clave de búsqueda)

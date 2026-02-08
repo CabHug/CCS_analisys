@@ -4,72 +4,91 @@ import subprocess
 import time
 
 def limpiar_pantalla():
-    # Limpia la consola según el sistema operativo
     os.system('cls' if os.name == 'nt' else 'clear')
 
 def mostrar_encabezado():
-    print("=" * 50)
-    print("        SISTEMA DE GESTIÓN DE PROYECTOS CCS")
-    print("=" * 50)
+    print("=" * 60)
+    print("      🚀  Centro de Capacitacion del Sur   🚀     ")
+    print("=" * 60)
 
-def ejecutar_conversion_automatica():
+def ejecutar_script(nombre_script, directorio):
     """
-    Ejecuta el archivo externo transform_to_csv.py asegurando las rutas correctas.
+    Ejecuta un script individual y maneja errores.
     """
-    # 1. Obtener la ruta absoluta de la carpeta donde está ESTE archivo de menú
-    directorio_actual = os.path.dirname(os.path.abspath(__file__))
+    ruta_script = os.path.join(directorio, nombre_script)
     
-    # 2. Construir la ruta completa al script objetivo
-    nombre_script = "transform_to_csv.py"
-    ruta_script = os.path.join(directorio_actual, nombre_script)
-
     if not os.path.exists(ruta_script):
-        print(f"\n❌ ERROR CRÍTICO: No se encuentra el archivo.")
-        print(f"   Buscando en: {ruta_script}")
-        print("   Asegúrate de que 'transform_to_csv.py' esté en la misma carpeta que este menú.")
-        return
+        print(f"\n❌ ERROR: No se encontró '{nombre_script}' en {directorio}")
+        return False
 
-    print(f"\n🚀 Iniciando proceso de conversión...\n")
-    print(f"📂 Ejecutando: {nombre_script}")
-    print("-" * 50)
+    print(f"\n⚙️  Ejecutando: {nombre_script}...")
+    print("-" * 40)
     
     try:
-        start_time = time.time()
-        
-        # 3. EJECUCIÓN CLAVE: 
-        # Pasamos 'cwd=directorio_actual' para que el script sepa dónde buscar sus imports (OOP_classes)
+        # Ejecutamos el script asegurando que use el mismo interprete de python
         subprocess.run(
             [sys.executable, ruta_script], 
             check=True, 
-            cwd=directorio_actual 
+            cwd=directorio 
         )
-        
-        end_time = time.time()
-        
-        print("-" * 50)
-        print(f"✨ Proceso finalizado exitosamente en {end_time - start_time:.2f} segundos.")
-        
+        print(f"✅ {nombre_script} finalizado correctamente.")
+        return True
     except subprocess.CalledProcessError as e:
-        print(f"\n❌ El script falló con un error (Código {e.returncode}).")
-        print("   Revisa los mensajes de error arriba ⬆️.")
+        print(f"\n❌ Error crítico en {nombre_script} (Código {e.returncode}).")
+        return False
     except Exception as e:
-        print(f"\n❌ Error inesperado al intentar ejecutar: {e}")
+        print(f"\n❌ Error inesperado: {e}")
+        return False
 
+def flujo_completo_procesamiento():
+    """
+    Ejecuta la secuencia completa de procesamiento de datos.
+    """
+    directorio_actual = os.path.dirname(os.path.abspath(__file__))
+    
+    # Definimos el orden lógico de ejecución
+    scripts_a_ejecutar = [
+        "etl.py",
+        "table_etl.py",
+        "transform_to_csv.py"
+    ]
+
+    limpiar_pantalla()
+    mostrar_encabezado()
+    print(f"\n🔄 INICIANDO FLUJO DE TRABAJO COMPLETO")
+    start_time_total = time.time()
+
+    for script in scripts_a_ejecutar:
+        exito = ejecutar_script(script, directorio_actual)
+        if not exito:
+            print(f"\n🛑 EL PROCESO SE DETUVO debido a un error en: {script}")
+            break
+        time.sleep(1) # Pequeña pausa estética entre scripts
+
+    end_time_total = time.time()
+    print("\n" + "=" * 60)
+    print(f"✨ ¡TODO EL PROCESO COMPLETADO! Duración: {end_time_total - start_time_total:.2f}s")
+    print("=" * 60)
+    
     input("\nPresiona ENTER para volver al menú...")
 
 def main():
     while True:
         limpiar_pantalla()
         mostrar_encabezado()
-        print("\nSeleccione una opción:")
-        print(" [1] Ejecutar Conversión XLSX a CSV (Automático)")
-        print(" [2] Salir")
+        print("\nSeleccione una acción:")
+        print(" [1] ⚡ Procesar Datos (ETL -> Tablas -> CSV)")
+        print(" [2] 📝 (Espacio para futuro script...)")
+        print(" [3] ❌ Salir")
         
         opcion = input("\n>> Su elección: ").strip()
 
         if opcion == '1':
-            ejecutar_conversion_automatica()
+            flujo_completo_procesamiento()
         elif opcion == '2':
+            print("\n💡 Opción reservada para el nuevo script en desarrollo.")
+            time.sleep(2)
+        elif opcion == '3':
             print("\n👋 ¡Hasta luego!")
             break
         else:

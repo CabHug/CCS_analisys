@@ -14,7 +14,22 @@ class DataPipeline:
     
     # Method 
     def clean_numer(self, number):
-        return re.sub(r'\D', '', number)
+        # 1. Si es nulo o vacío, devolvemos None (NULL en SQL)
+        if pd.isna(number) or str(number).strip() in ["", "nan", "None", "null"]:
+            return None
+        
+        # 2. Quitar el .0 si es un float antes de convertir a string
+        if isinstance(number, (float, int)):
+            try:
+                if float(number) == int(number):
+                    number = int(number)
+            except:
+                pass
+        
+        # 3. Limpiar todo lo que no sea dígito
+        cleaned = re.sub(r'\D', '', str(number))
+        return cleaned if cleaned != "" else None
+
 
     # Method to take configuration from .json file, return all items
     def read_config_json(self):
@@ -60,7 +75,7 @@ class DataPipeline:
 
             # Option to perform data filling with null value you can customice it
             elif action == 'F': #-> FILL
-                filling = 'null'
+                filling = None
                 if not id_serie_with_value.empty:
                     print('Please perform a replacement!')
                 
@@ -70,13 +85,15 @@ class DataPipeline:
             # Option to capitalice the text
             elif action == 'C': #-> CAPITALICE
                 #df[column] = df[column].str.capitalize()
-                df[column] = df[column].astype(str).str.capitalize()
+                #df[column] = df[column].astype(str).str.capitalize()
+                df[column] = df[column].apply(lambda x: str(x).strip().capitalize() if pd.notnull(x) and str(x).lower() != 'none' else None)
 
 
             # Option to capitalice every first letter
             elif action == 'T': #-> CAPITALICE FIRST LETTER
                 #df[column] = df[column].str.title()
-                df[column] = df[column].astype(str).str.title()
+                #df[column] = df[column].astype(str).str.title()
+                df[column] = df[column].apply(lambda x: str(x).strip().title() if pd.notnull(x) and str(x).lower() != 'none' else None)
 
             
             # opciton to uppercase the text
@@ -88,8 +105,11 @@ class DataPipeline:
 
         return df, wrong_df
 
-    def replace_text(self, df, column, sre, ifno='null'):
-        df[column] = df[column].map(sre).fillna(ifno)
+    def replace_text(self, df, column, sre, ifno=None):
+        # Usamos replace en lugar de map para que si no coincide, deje el valor original
+        df[column] = df[column].replace(sre)
+        # Solo ponemos None (NULL) si realmente está vacío después de limpiar espacios
+        df[column] = df[column].apply(lambda x: x if pd.notnull(x) and str(x).strip() != "" else ifno)
 
     def store_output_files(self, cleaned_path, work_df, rejected_path, wrong_df, file):
         work_df.to_excel(cleaned_path+"/Cleaned_"+file[:-4]+"xlsx", index=False, engine="openpyxl")
@@ -307,6 +327,6 @@ class Project(DataPipeline):
                     temporary_df[col[0]] = values
                     break
             else:
-                temporary_df[col[0]] = 'null'
+                temporary_df[col[0]] = None
         
         return temporary_df

@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 
-from OOP_classes import *
+from OOP_classes import Project
 
 CCS = Project()
 # Strating with CCS object configuration
@@ -10,8 +10,6 @@ CCS.read_config_json() # Set paths required for Extract data files
 CCS.find_work_foldes() # Set work folders inside data_source folder
 CCS.set_work_files_per_year() # Create a dictionario with work files per year
 
-import pandas as pd
-import os
 
 def convertir_xlsx_a_csv_final_con_limpieza_numerica(ruta_origen, ruta_destino):
     """
@@ -50,7 +48,6 @@ def convertir_xlsx_a_csv_final_con_limpieza_numerica(ruta_origen, ruta_destino):
                     if col in df.columns:
                         df[col] = pd.to_datetime(
                             df[col], 
-                            format='%d/%m/%Y',
                             errors='coerce'
                         )
                         print(f"    🔄 Columna '{col}' convertida a formato SQL.")
@@ -68,7 +65,7 @@ def convertir_xlsx_a_csv_final_con_limpieza_numerica(ruta_origen, ruta_destino):
                     ruta_csv, 
                     index=False, 
                     encoding='utf-8', 
-                    na_rep='null' # Rellena otros nulos (texto, fechas fallidas) con 'null'
+                    na_rep='' # Rellena otros nulos (texto, fechas fallidas) con 'null'
                 )
                 
                 print(f"  ✅ Convertido '{nombre_archivo}'.")
