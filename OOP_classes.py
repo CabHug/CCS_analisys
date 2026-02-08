@@ -218,6 +218,7 @@ class Project(DataPipeline):
             'MAYO': 5, 'JUNIO': 6, 'JULIO': 7, 'AGOSTO': 8,
             'SEPTIEMBRE': 9, 'OCTUBRE': 10, 'NOVIEMBRE': 11, 'DICIEMBRE': 12
             }
+        self.db_config = {}
 
     # Getters and Setters
 
@@ -251,6 +252,7 @@ class Project(DataPipeline):
         self.cleaned_path = config['cleaned']
         self.rejected_path = config['rejected']
         self.db_tables = config['tables']
+        self.db_config = config['db_config']
         return True
 
     # Method to get work folder per yer

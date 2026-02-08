@@ -8,7 +8,7 @@ def limpiar_pantalla():
 
 def mostrar_encabezado():
     print("=" * 60)
-    print("      🚀  Centro de Capacitacion del Sur   🚀     ")
+    print("      🚀  Centro de Capacitación del Sur (CCS)  🚀      ")
     print("=" * 60)
 
 def ejecutar_script(nombre_script, directorio):
@@ -40,35 +40,45 @@ def ejecutar_script(nombre_script, directorio):
         print(f"\n❌ Error inesperado: {e}")
         return False
 
-def flujo_completo_procesamiento():
+def flujo_procesamiento_archivos():
     """
-    Ejecuta la secuencia completa de procesamiento de datos.
+    OPCIÓN 1: Ejecuta la secuencia de limpieza y generación de CSV.
     """
     directorio_actual = os.path.dirname(os.path.abspath(__file__))
-    
-    # Definimos el orden lógico de ejecución
-    scripts_a_ejecutar = [
-        "etl.py",
-        "table_etl.py",
-        "transform_to_csv.py"
-    ]
+    scripts_a_ejecutar = ["etl.py", "table_etl.py", "transform_to_csv.py"]
 
     limpiar_pantalla()
     mostrar_encabezado()
-    print(f"\n🔄 INICIANDO FLUJO DE TRABAJO COMPLETO")
+    print(f"\n🔄 INICIANDO TRANSFORMACIÓN DE ARCHIVOS (Excel -> CSV)")
+    
     start_time_total = time.time()
-
     for script in scripts_a_ejecutar:
-        exito = ejecutar_script(script, directorio_actual)
-        if not exito:
+        if not ejecutar_script(script, directorio_actual):
             print(f"\n🛑 EL PROCESO SE DETUVO debido a un error en: {script}")
             break
-        time.sleep(1) # Pequeña pausa estética entre scripts
+        time.sleep(0.5)
 
-    end_time_total = time.time()
-    print("\n" + "=" * 60)
-    print(f"✨ ¡TODO EL PROCESO COMPLETADO! Duración: {end_time_total - start_time_total:.2f}s")
-    print("=" * 60)
+    print(f"\n✨ Transformación completada en {time.time() - start_time_total:.2f}s")
+    input("\nPresiona ENTER para volver al menú...")
+
+def flujo_actualizar_base_datos():
+    """
+    OPCIÓN 2: Ejecuta el script de carga a PostgreSQL.
+    """
+    directorio_actual = os.path.dirname(os.path.abspath(__file__))
+    
+    limpiar_pantalla()
+    mostrar_encabezado()
+    print(f"\n📤 INICIANDO CARGA A BASE DE DATOS POSTGRESQL")
+    
+    start_time = time.time()
+    # Asegúrate de que tu script se llame exactamente 'update_db.py'
+    exito = ejecutar_script("update_db.py", directorio_actual)
+    
+    if exito:
+        print(f"\n✅ BASE DE DATOS ACTUALIZADA EXITOSAMENTE en {time.time() - start_time:.2f}s")
+    else:
+        print(f"\n❌ FALLÓ LA CARGA a la base de datos.")
     
     input("\nPresiona ENTER para volver al menú...")
 
@@ -77,17 +87,16 @@ def main():
         limpiar_pantalla()
         mostrar_encabezado()
         print("\nSeleccione una acción:")
-        print(" [1] ⚡ Procesar Datos (ETL -> Tablas -> CSV)")
-        print(" [2] 📝 (Espacio para futuro script...)")
+        print(" [1] ⚡ Procesar Archivos (ETL -> Tablas -> CSV)")
+        print(" [2] 🗄️  Actualizar Base de Datos (CSV -> PostgreSQL)")
         print(" [3] ❌ Salir")
         
         opcion = input("\n>> Su elección: ").strip()
 
         if opcion == '1':
-            flujo_completo_procesamiento()
+            flujo_procesamiento_archivos()
         elif opcion == '2':
-            print("\n💡 Opción reservada para el nuevo script en desarrollo.")
-            time.sleep(2)
+            flujo_actualizar_base_datos()
         elif opcion == '3':
             print("\n👋 ¡Hasta luego!")
             break
