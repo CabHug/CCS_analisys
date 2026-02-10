@@ -1,208 +1,165 @@
 import pandas as pd
+import numpy as np
 from OOP_classes import Project
 
-
+# ==========================================================
+# 1. CONFIGURACIÓN INICIAL
+# ==========================================================
 CCS = Project()
-# Strating with CCS object configuration
-CCS.set_current_year() # Set current year in object attributes
-CCS.read_config_json() # Set paths required for Extract data files
-CCS.find_work_foldes() # Set work folders inside data_source folder
-CCS.set_work_files_per_year() # Create a dictionario with work files per year
+CCS.set_current_year() 
+CCS.read_config_json() 
+CCS.find_work_foldes() 
+CCS.set_work_files_per_year() 
 
+# Cargamos el consolidado y hacemos una COPIA para no afectar el original
 consl_df = pd.read_csv(f'{CCS.info_source_path}/consolidate_normalized.csv')
 raw_consl_df = consl_df.copy()
 
-# TABLE STRUCTURE CREATION
-print("*"*50)
-print("## ​​​🤖​ TABLE STRUCTURE CREATION ​​​🤖​ ##")
-print("*"*50)
+# ==========================================================
+# 2. FUNCIONES DE APOYO MEJORADAS
+# ==========================================================
 
-## CREACION DE TABLA CLIENTES
-columnas_datos = ['PRIMER_APELLIDO', 'SEGUNDO_APELLIDO', 'PRIMER_NOMBRE', 
-                  'SEGUNDO_NOMBRE', 'FECHA_DE_NACIMIENTO', 'GENERO', 
-                  'CELULAR', 'CORREO', 'CIUDAD_REGION', 'PROFESION']
-ruta_archivo = f'{CCS.db_tables}/a_base/CLIENTES.xlsx'
-CCS.table_creation(raw_consl_df, columnas_datos, 'NUMERO_DE_IDENTIFICACION', ruta_archivo, 'CLIENTE_ID')
-
-## CREACION DE TABLA PROFESION
-columnas_datos = []
-ruta_archivo = f'{CCS.db_tables}/PROFESION.xlsx'
-CCS.table_creation(raw_consl_df, columnas_datos, 'PROFESION', ruta_archivo, 'PROFESION_ID')
-
-## CREACION DE TABLA MODALIDAD
-columnas_datos = []
-ruta_archivo = f'{CCS.db_tables}/MODALIDAD.xlsx'
-CCS.table_creation(raw_consl_df, columnas_datos, 'MODALIDAD', ruta_archivo, 'MODALIDAD_ID')
-
-## CREACION DE TABLA GENERO
-columnas_datos = []
-ruta_archivo = f'{CCS.db_tables}/GENERO.xlsx'
-CCS.table_creation(raw_consl_df, columnas_datos, 'GENERO', ruta_archivo, 'GENERO_ID')
-
-## CREACION DE TABLA RESPONSABLE_VENTA
-columnas_datos = []
-ruta_archivo = f'{CCS.db_tables}/RESPONSABLE_VENTA.xlsx'
-CCS.table_creation(raw_consl_df, columnas_datos, 'RESPONSABLE_VENTA', ruta_archivo, 'RESPONSABLE_VENTA_ID')
-
-## CREACION DE TABLA MEDIO_DE_PAGO
-columnas_datos = []
-ruta_archivo = f'{CCS.db_tables}/MEDIO_DE_PAGO.xlsx'
-CCS.table_creation(raw_consl_df, columnas_datos, 'MEDIO_DE_PAGO', ruta_archivo, 'MEDIO_DE_PAGO_ID')
-
-## CREACION DE TABLA PROCEDENCIA
-columnas_datos = []
-ruta_archivo = f'{CCS.db_tables}/PROCEDENCIA.xlsx'
-CCS.table_creation(raw_consl_df, columnas_datos, 'PROCEDENCIA', ruta_archivo, 'PROCEDENCIA_ID')
-
-## CREACION DE TABLA CURSOS
-columnas_datos = ['VALOR_UNITARIO']
-ruta_archivo = f'{CCS.db_tables}/CURSO.xlsx'
-CCS.table_creation(raw_consl_df, columnas_datos, 'CURSO', ruta_archivo, 'CURSO_ID')
-
-## CREACION DE TABLA CIUDAD_REGION
-columnas_datos = []
-ruta_archivo = f'{CCS.db_tables}/CIUDAD_REGION.xlsx'
-CCS.table_creation(raw_consl_df, columnas_datos, 'CIUDAD_REGION', ruta_archivo, 'CIUDAD_REGION_ID')
-
-## CREACION DE TABLA DESCUENTO
-columnas_datos = []
-ruta_archivo = f'{CCS.db_tables}/DESCUENTO.xlsx'
-CCS.table_creation(raw_consl_df, columnas_datos, 'DESCUENTO', ruta_archivo, 'DESCUENTO_ID')
-
-
-def mapear_categorias_corregida(df_ventas: pd.DataFrame, 
-                                df_categorias_lookup: pd.DataFrame, 
-                                columna_categoria: str, # Columna de categoría (el valor que coincide)
-                                columna_id: str,        # Columna que contiene el ID (el valor que reemplaza)
-                                columna_a_modificar: str = None # Columna en df_ventas a la que aplicar el mapeo
-                               ) -> pd.DataFrame:
+def consolidar_maestra(df, columna_id, columnas_datos):
     """
-    Reemplaza los valores de una columna en df_ventas por el ID
-    correspondiente de df_categorias_lookup.
+    Agrupa por ID y rescata la mejor información disponible.
+    IMPORTANTE: Convierte vacíos a NaN para que .first() no tome celdas vacías como datos válidos.
     """
+    temp = df[[columna_id] + columnas_datos].copy()
     
-    # Si no se especifica la columna a modificar en df_ventas, se asume que
-    # es la misma columna de categorías (comportamiento habitual).
+    # 1. Limpieza de ID
+    temp[columna_id] = temp[columna_id].astype(str).str.strip().str.replace(r'\.0$', '', regex=True)
+    
+    # 2. LIMPIEZA PROFUNDA: Convertir '', ' ', 'null', 'None' a np.nan (Nulo real)
+    # Esto es vital para que Pandas ignore las celdas vacías y busque el dato real en las siguientes filas
+    temp = temp.replace(r'^\s*$', np.nan, regex=True)
+    temp = temp.replace(['nan', 'null', 'None'], np.nan)
+
+    # 3. Agrupamos. .first() ahora saltará los NaNs y tomará el primer valor REAL.
+    consolidado = temp.groupby(columna_id).first().reset_index()
+    
+    return consolidado
+
+def mapear_categorias_corregida(df_ventas, df_lookup, columna_categoria, columna_id, columna_a_modificar=None):
     if columna_a_modificar is None:
         columna_a_modificar = columna_categoria
 
-    # LIMPIEZA PRE-MAPEO: Aseguramos que ambos lados hablen el mismo idioma
-    # Si estamos mapeando el ID de identificación
-    if "NUMERO_DE_IDENTIFICACION" in [columna_categoria, columna_a_modificar]:
-        df_ventas[columna_a_modificar] = df_ventas[columna_a_modificar].apply(lambda x: CCS.clean_numer(x))
-        df_categorias_lookup[columna_categoria] = df_categorias_lookup[columna_categoria].apply(lambda x: CCS.clean_numer(x))
+    # Limpieza para asegurar match (strip quita espacios invisibles al inicio/final)
+    df_ventas[columna_a_modificar] = df_ventas[columna_a_modificar].astype(str).str.strip()
+    df_lookup[columna_categoria] = df_lookup[columna_categoria].astype(str).str.strip()
 
-    # 1. Crear el mapa de Series: Categoría -> ID
-    # Aquí es donde se establece que la categoría es el índice (la clave de búsqueda)
-    # y el ID es el valor que queremos obtener.
-    mapa_ids_serie = df_categorias_lookup.set_index(columna_categoria)[columna_id]
+    mapa_ids = df_lookup.set_index(columna_categoria)[columna_id]
     
-    # 2. Aplicar el mapeo a la columna de ventas
-    df_ventas[columna_a_modificar] = df_ventas[columna_a_modificar].map(mapa_ids_serie)
+    # Mapeamos. Si no encuentra el ID, dejará NaN (que luego el script CSV convertirá a 0 o null)
+    df_ventas[columna_a_modificar] = df_ventas[columna_a_modificar].map(mapa_ids)
     
     return df_ventas
 
-## CREACION DE TABLA CLIENTES ##
-raw_conslidate_df = pd.read_excel(f'{CCS.db_tables}/a_base/CLIENTES.xlsx')
-if 'Unnamed: 0' in raw_conslidate_df.columns:
-    raw_conslidate_df = raw_conslidate_df.drop('Unnamed: 0', axis=1)
+# ==========================================================
+# 3. CREACIÓN DE TABLAS MAESTRAS
+# ==========================================================
+print("*"*50)
+print("## ​​​🤖​ CONSOLIDACIÓN Y CREACIÓN DE TABLAS ​​​🤖​ ##")
+print("*"*50)
 
-work_colums = ['CIUDAD_REGION', 'GENERO', 'PROFESION']
+# --- A. CLIENTES (Corrección del Correo perdido) ---
+print("🤖 Consolidando CLIENTES (Priorizando datos no vacíos)...")
+cols_clientes = ['PRIMER_APELLIDO', 'SEGUNDO_APELLIDO', 'PRIMER_NOMBRE', 'SEGUNDO_NOMBRE', 
+                 'FECHA_DE_NACIMIENTO', 'GENERO', 'CELULAR', 'CORREO', 'CIUDAD_REGION', 'PROFESION']
 
-pd.set_option("display.max_columns", None)  # muestra todas las filas
-for column_lookup in work_colums:
-    print(f'🤖 ID normalizacion para la columna: {column_lookup}')
-    table = f'{column_lookup}.xlsx'
-    column_lookup_id = f'{column_lookup}_ID'
-    column_ventas = None
+df_clientes_full = consolidar_maestra(raw_consl_df, 'NUMERO_DE_IDENTIFICACION', cols_clientes)
 
-    df_categorias_lookup = pd.read_excel(f'{CCS.db_tables}/{table}')
-    if 'Unnamed: 0' in df_categorias_lookup.columns:
-        df_categorias_lookup = df_categorias_lookup.drop('Unnamed: 0', axis=1)
-    try:
-        raw_conslidate_df = mapear_categorias_corregida(
-            raw_conslidate_df.copy(),
-            df_categorias_lookup.copy(), 
-            column_lookup,
-            column_lookup_id,
-            column_ventas
-        )
-        print("\n🤖✅ Mapeo completado exitosamente.")
-        raw_df = raw_conslidate_df.copy()
-        raw_df.rename(columns={
-            'CIUDAD_REGION': 'CIUDAD_REGION_ID',
-            'GENERO': 'GENERO_ID',
-            'PROFESION': 'PROFESION_ID'
-        }, inplace=True)
-        raw_df.to_excel(f"{CCS.db_tables}/CLIENTES.xlsx", index=False)
+# Insertamos ID
+df_clientes_full.insert(0, 'CLIENTE_ID', range(1, len(df_clientes_full) + 1))
 
-    except ValueError as e:
-        print(f"\n🤖⚠️ Mapeo fallido: {e}")
-""" 
+# Guardamos
+ruta_cli = f'{CCS.db_tables}/a_base/CLIENTES.xlsx'
+df_clientes_full.to_excel(ruta_cli, index=False)
+CCS.table_creation(df_clientes_full, cols_clientes, 'NUMERO_DE_IDENTIFICACION', ruta_cli, 'CLIENTE_ID')
 
-"""
-#########################################
+# --- B. CURSOS ---
+print("🤖 Consolidando CURSOS...")
+df_cursos = consolidar_maestra(raw_consl_df, 'CURSO', ['VALOR_UNITARIO'])
+ruta_cur = f'{CCS.db_tables}/CURSO.xlsx'
+CCS.table_creation(df_cursos, ['VALOR_UNITARIO'], 'CURSO', ruta_cur, 'CURSO_ID')
 
-## CREACION DE TABLA FACT_VENTAS ##
-raw_conslidate_df = consl_df.copy()
-if 'Unnamed: 0' in raw_conslidate_df.columns:
-    raw_conslidate_df = raw_conslidate_df.drop('Unnamed: 0', axis=1)
+# --- C. RESPONSABLE DE VENTA (Corrección para ELABORO) ---
+print("🤖 Creando lista maestra de EMPLEADOS (Ventas + Elaboró)...")
+# Unimos las dos columnas para tener TODOS los nombres posibles
+vendedores = raw_consl_df['RESPONSABLE_VENTA'].dropna().unique()
+elaboradores = raw_consl_df['ELABORO'].dropna().unique()
+# Concatenamos y quitamos duplicados
+todos_los_empleados = pd.DataFrame(np.unique(np.concatenate((vendedores, elaboradores))), columns=['RESPONSABLE_VENTA'])
 
-work_colums = ['NUMERO_DE_IDENTIFICACION', 'CURSO', 'DESCUENTO', 'MEDIO_DE_PAGO', 'MODALIDAD',
-               'PROCEDENCIA', 'RESPONSABLE_VENTA', 'ELABORO']
+ruta_resp = f'{CCS.db_tables}/RESPONSABLE_VENTA.xlsx'
+# Usamos este dataframe combinado para crear la tabla maestra
+CCS.table_creation(todos_los_empleados, [], 'RESPONSABLE_VENTA', ruta_resp, 'RESPONSABLE_VENTA_ID')
 
-pd.set_option("display.max_columns", None)  # muestra todas las filas
-for column_lookup in work_colums:
-    print(f'🤖 ID normalizacion para la columna: {column_lookup}')
-    table = f'{column_lookup}.xlsx'
-    column_lookup_id = f'{column_lookup}_ID'
-    column_ventas = None
-    if column_lookup == 'ELABORO':
-        table = 'RESPONSABLE_VENTA.xlsx'
-        column_lookup = 'RESPONSABLE_VENTA'
-        column_ventas = 'ELABORO'
-        column_lookup_id = 'RESPONSABLE_VENTA_ID'
+# --- D. OTRAS MAESTRAS SIMPLES ---
+otras_maestras = {
+    'PROFESION': 'PROFESION_ID', 'MODALIDAD': 'MODALIDAD_ID', 'GENERO': 'GENERO_ID',
+    'MEDIO_DE_PAGO': 'MEDIO_DE_PAGO_ID', 'PROCEDENCIA': 'PROCEDENCIA_ID',
+    'CIUDAD_REGION': 'CIUDAD_REGION_ID', 'DESCUENTO': 'DESCUENTO_ID'
+}
 
-    elif column_lookup == 'NUMERO_DE_IDENTIFICACION':
-        table = 'CLIENTES.xlsx'
-        column_lookup = 'NUMERO_DE_IDENTIFICACION'
-        column_ventas = 'NUMERO_DE_IDENTIFICACION'
-        column_lookup_id = 'CLIENTE_ID'
+for tabla, id_name in otras_maestras.items():
+    print(f"🤖 Procesando: {tabla}")
+    ruta = f'{CCS.db_tables}/{tabla}.xlsx'
+    CCS.table_creation(raw_consl_df, [], tabla, ruta, id_name)
 
-    df_categorias_lookup = pd.read_excel(f'{CCS.db_tables}/{table}')
-    if 'Unnamed: 0' in df_categorias_lookup.columns:
-        df_categorias_lookup = df_categorias_lookup.drop('Unnamed: 0', axis=1)
-    try:
-        raw_conslidate_df = mapear_categorias_corregida(
-            raw_conslidate_df.copy(),
-            df_categorias_lookup.copy(), 
-            column_lookup,
-            column_lookup_id,
-            column_ventas
-        )
-        print("\n🤖✅ Mapeo completado exitosamente.")
-        raw_df = raw_conslidate_df[['NUMERO_DE_IDENTIFICACION', 'CURSO', 'MODALIDAD',
-        'RENOVACION', 'RESPONSABLE_VENTA', 'FECHA_DE_VENTA', 'DESCUENTO', 
-        'PRECIO_NETO', 'MEDIO_DE_PAGO', 'FECHA_DE_PAGO', 'ELABORO',
-        'PROCEDENCIA', 'SEGUIMIENTO_POST-VENTA']]
+# ==========================================================
+# 4. NORMALIZACIÓN DE CLIENTES (IDs Externos)
+# ==========================================================
+print("\n🤖 Actualizando IDs en tabla CLIENTES...")
+df_clientes_final = pd.read_excel(f'{CCS.db_tables}/a_base/CLIENTES.xlsx')
 
-        raw_df.to_excel(f'{CCS.db_tables}/a_base/VENTAS.xlsx', index=True, index_label='VENTA_ID')
-    except ValueError as e:
-        print(f"\n🤖⚠️ Mapeo fallido: {e}")
+for col in ['CIUDAD_REGION', 'GENERO', 'PROFESION']:
+    df_ref = pd.read_excel(f'{CCS.db_tables}/{col}.xlsx')
+    df_clientes_final = mapear_categorias_corregida(df_clientes_final, df_ref, col, f'{col}_ID')
 
+df_clientes_final.rename(columns={'CIUDAD_REGION': 'CIUDAD_REGION_ID', 'GENERO': 'GENERO_ID', 'PROFESION': 'PROFESION_ID'}, inplace=True)
+df_clientes_final.to_excel(f"{CCS.db_tables}/CLIENTES.xlsx", index=False)
 
-normal_raw_df = pd.read_excel(f'{CCS.db_tables}/a_base/VENTAS.xlsx')
-normal_raw_df.rename(columns={
-        'NUMERO_DE_IDENTIFICACION': 'CLIENTE_ID',
-        'CURSO': 'CURSO_ID',
-        'MODALIDAD': 'MODALIDAD_ID',
-        'RESPONSABLE_VENTA': 'RESPONSABLE_VENTA_ID',
-        'DESCUENTO': 'DESCUENTO_ID',
-        'MEDIO_DE_PAGO': 'MEDIO_DE_PAGO_ID',
-        'ELABORO': 'RESPONSABLE_VENTA_ID', # Este no seria una columna duplicada, corresponde a quien elaboro el certificado
-        'PROCEDENCIA': 'PROCEDENCIA_ID'
-    }, inplace=True)
-normal_raw_df.to_excel(f'{CCS.db_tables}/VENTAS.xlsx', index=False)
+# ==========================================================
+# 5. CREACIÓN DE FACT_VENTAS
+# ==========================================================
+print("\n🤖 Generando FACT_VENTAS (Mapeando todos los IDs)...")
+df_ventas = raw_consl_df.copy()
 
-#########################################
+# Mapeos estándar
+cols_map = ['CURSO', 'DESCUENTO', 'MEDIO_DE_PAGO', 'MODALIDAD', 'PROCEDENCIA']
+for col in cols_map:
+    df_ref = pd.read_excel(f'{CCS.db_tables}/{col}.xlsx')
+    df_ventas = mapear_categorias_corregida(df_ventas, df_ref, col, f'{col}_ID')
 
+# Mapeo Clientes
+df_cli = pd.read_excel(f'{CCS.db_tables}/CLIENTES.xlsx')
+# Convertimos a string para asegurar match
+df_cli['NUMERO_DE_IDENTIFICACION'] = df_cli['NUMERO_DE_IDENTIFICACION'].astype(str).str.replace(r'\.0$', '', regex=True)
+df_ventas['NUMERO_DE_IDENTIFICACION'] = df_ventas['NUMERO_DE_IDENTIFICACION'].astype(str).str.replace(r'\.0$', '', regex=True)
+df_ventas = mapear_categorias_corregida(df_ventas, df_cli, 'NUMERO_DE_IDENTIFICACION', 'CLIENTE_ID')
+
+# Mapeo RESPONSABLE Y ELABORO (Ambos usan la misma tabla maestra ahora completa)
+df_resp = pd.read_excel(f'{CCS.db_tables}/RESPONSABLE_VENTA.xlsx')
+print("   -> Mapeando Responsable Venta...")
+df_ventas = mapear_categorias_corregida(df_ventas, df_resp, 'RESPONSABLE_VENTA', 'RESPONSABLE_VENTA_ID')
+
+print("   -> Mapeando Elaboró...")
+# Aquí usamos la misma tabla de referencia, pero aplicamos el ID sobre la columna 'ELABORO'
+df_ventas = mapear_categorias_corregida(df_ventas, df_resp, 'RESPONSABLE_VENTA', 'RESPONSABLE_VENTA_ID', columna_a_modificar='ELABORO')
+
+# Selección final
+df_final = df_ventas[[
+    'NUMERO_DE_IDENTIFICACION', 'CURSO', 'MODALIDAD', 'RENOVACION', 
+    'RESPONSABLE_VENTA', 'FECHA_DE_VENTA', 'DESCUENTO', 'PRECIO_NETO', 
+    'MEDIO_DE_PAGO', 'FECHA_DE_PAGO', 'ELABORO', 'PROCEDENCIA', 'SEGUIMIENTO_POST-VENTA'
+]]
+
+df_final.columns = [
+    'CLIENTE_ID', 'CURSO_ID', 'MODALIDAD_ID', 'RENOVACION', 
+    'RESPONSABLE_VENTA_ID', 'FECHA_DE_VENTA', 'DESCUENTO_ID', 'PRECIO_NETO', 
+    'MEDIO_DE_PAGO_ID', 'FECHA_DE_PAGO', 'ELABORO', 'PROCEDENCIA_ID', 'SEGUIMIENTO_POST-VENTA'
+]
+
+# Guardar
+df_final.to_excel(f'{CCS.db_tables}/VENTAS.xlsx', index=True, index_label='VENTA_ID')
+print("\n✨ PROCESO FINALIZADO - Revisa CLIENTES.xlsx y VENTAS.xlsx ✨")

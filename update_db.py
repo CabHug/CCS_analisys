@@ -1,27 +1,23 @@
 import os
 import pandas as pd
+import numpy as np
 from sqlalchemy import create_engine, text
-from io import StringIO
-
 from OOP_classes import Project
+
+# ==========================================================
+# 1. CONFIGURACIÓN Y RUTAS
+# ==========================================================
 CCS = Project()
 CCS.read_config_json()
 
+# Configuración de base de datos
+DB_URL = f"postgresql://{CCS.db_config['user']}:{CCS.db_config['password']}@{CCS.db_config['host']}:{CCS.db_config['port']}/{CCS.db_config['database']}"
+SCHEMA_NAME = 'public'
 
-# ==============================================================================
-# --- CONFIGURACIÓN DE CONEXIÓN (PON TU INFORMACIÓN AQUÍ) ---
-# ==============================================================================
-DB_USER = CCS.db_config['user']
-DB_PASS = CCS.db_config['password']
-DB_HOST = CCS.db_config['host']
-DB_PORT = CCS.db_config['port']
-DB_NAME = CCS.db_config['database']  # Asegúrate de que este es el nombre de tu DB
-SCHEMA_NAME = 'public' # Por defecto es 'public', cámbialo si creaste un esquema propio
-# ==============================================================================
+# Ruta de archivos CSV
+RUTA_CSV_CARGA = r"C:\Users\Hugo\OneDrive\Documentos\MEGA\PROYECTOS\CCS\Analisis CCS\Python-analisys\DB_tables\a_csv_tables"
 
-# --- CONFIGURACIÓN DE RUTAS ---
-RUTA_ARCHIVOS = r"C:\Users\Hugo\OneDrive\Documentos\MEGA\PROYECTOS\CCS\Analisis CCS\Python-analisys\DB_tables\a_csv_tables"
-
+# Mapeo exacto CSV -> Tabla DB
 MAPEO_TABLAS = {
     'CIUDAD_REGION': 'ciudad_region',
     'CURSO': 'cursos',
@@ -36,85 +32,118 @@ MAPEO_TABLAS = {
     'VENTAS': 'fact_ventas'
 }
 
-def cargar_datos():
-    # Cadena de conexión corregida
-    engine = create_engine(f'postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}', pool_pre_ping=True)
-    
-    if not os.path.exists(RUTA_ARCHIVOS):
-        print(f"❌ La ruta no existe: {RUTA_ARCHIVOS}")
-        return
+# Orden de carga estricto
+ORDEN_CARGA = [
+    'ciudad_region', 'cursos', 'descuento', 'genero', 'medio_de_pago', 
+    'modalidad', 'procedencia', 'profesion', 'responsable_venta', 
+    'clientes', 'fact_ventas'
+]
 
-    archivos_en_carpeta = os.listdir(RUTA_ARCHIVOS)
-    
-    for nombre_base, tabla_destino in MAPEO_TABLAS.items():
-        archivo_encontrado = [f for f in archivos_en_carpeta if f.upper().startswith(nombre_base)]
+# ==========================================================
+# 2. FUNCIONES DE APOYO
+# ==========================================================
+
+def limpiar_db(engine):
+    """ Borra contenido y reinicia contadores SERIAL """
+    print("\n🧹 LIMPIANDO BASE DE DATOS (TRUNCATE)...")
+    with engine.begin() as conn:
+        for tabla in reversed(ORDEN_CARGA):
+            try:
+                conn.execute(text(f'TRUNCATE TABLE "{SCHEMA_NAME}"."{tabla}" RESTART IDENTITY CASCADE;'))
+            except Exception as e:
+                print(f"   ⚠️ No se pudo limpiar {tabla}: {e}")
+    print("✨ Base de datos lista.")
+
+def validar_llaves_foraneas(df, tabla_nombre, engine):
+    """ 
+    Evita el error ForeignKeyViolation comparando con lo que ya se subió a la DB.
+    Si un ID no existe en la maestra, se pone como None.
+    """
+    if tabla_nombre == 'clientes':
+        maestras = {
+            'GENERO_ID': 'genero',
+            'PROFESION_ID': 'profesion',
+            'CIUDAD_REGION_ID': 'ciudad_region'
+        }
+    elif tabla_nombre == 'fact_ventas':
+        maestras = {
+            'CLIENTE_ID': 'clientes',
+            'CURSO_ID': 'cursos',
+            'MODALIDAD_ID': 'modalidad',
+            'DESCUENTO_ID': 'descuento',
+            'MEDIO_DE_PAGO_ID': 'medio_de_pago',
+            'PROCEDENCIA_ID': 'procedencia',
+            'RESPONSABLE_VENTA_ID': 'responsable_venta',
+            'ELABORO': 'responsable_venta'
+        }
+    else:
+        return df
+
+    for col_id, tabla_ref in maestras.items():
+        if col_id in df.columns:
+            # Consultar IDs existentes en la DB
+            query = text(f'SELECT "{col_id if col_id != "ELABORO" else "RESPONSABLE_VENTA_ID"}" FROM "{SCHEMA_NAME}"."{tabla_ref}"')
+            ids_validos = pd.read_sql(query, engine).iloc[:, 0].tolist()
+            
+            # Si el ID no está en los válidos, poner None
+            invalidos = df[~df[col_id].isin(ids_validos) & df[col_id].notnull()]
+            if not invalidos.empty:
+                print(f"   ⚠️ Corrigiendo {len(invalidos)} huérfanos en {col_id} (referencia a {tabla_ref} no encontrada)")
+                df.loc[~df[col_id].isin(ids_validos), col_id] = None
+    return df
+
+# ==========================================================
+# 3. PROCESO PRINCIPAL
+# ==========================================================
+
+def cargar_datos():
+    engine = create_engine(DB_URL)
+    limpiar_db(engine)
+
+    archivos_en_carpeta = os.listdir(RUTA_CSV_CARGA)
+    mapeo_inverso = {v: k for k, v in MAPEO_TABLAS.items()}
+
+    print("\n🚀 CARGANDO TABLAS...")
+
+    for tabla_destino in ORDEN_CARGA:
+        nombre_base = mapeo_inverso.get(tabla_destino)
+        archivo = [f for f in archivos_en_carpeta if f.upper().startswith(nombre_base)]
         
-        if not archivo_encontrado:
+        if not archivo:
             continue
             
-        ruta_completa = os.path.join(RUTA_ARCHIVOS, archivo_encontrado[0])
-        print(f"\n🚀 Procesando {archivo_encontrado[0]} -> Tabla {tabla_destino}...")
-
+        ruta = os.path.join(RUTA_CSV_CARGA, archivo[0])
         try:
-            # Leemos el CSV
-            df = pd.read_csv(ruta_completa, sep=',', encoding='utf-8', engine='python')
-            
-            # --- 1. LIMPIEZA ---
-            df.columns = [c.strip().upper() for c in df.columns]
+            df = pd.read_csv(ruta, sep=',', encoding='utf-8', engine='python')
             df.columns = [c.strip().upper().replace("-", "_") for c in df.columns]
-            
+
+            # Renombrar campo especial en ventas
             if tabla_destino == 'fact_ventas' and 'RESPONSABLE_VENTA_ID.1' in df.columns:
                 df = df.rename(columns={'RESPONSABLE_VENTA_ID.1': 'ELABORO'})
 
-            # --- 2. MANEJO DE NULOS (CRÍTICO PARA POSTGRES) ---
-            # En lugar de texto "null", usamos None para que SQL reciba NULL real
-            df = df.replace(['null', 'nan', 'NaN', 'None', ''], None)
-            
-            # --- 3. CONVERSIÓN DE TIPOS ---
-            columnas_fecha = [c for c in df.columns if 'FECHA' in c]
-            for col in columnas_fecha:
+            # 1. Limpieza de Nulos en columnas obligatorias
+            col_validar = tabla_destino.upper()
+            if col_validar in df.columns:
+                df = df.dropna(subset=[col_validar])
+
+            # 2. Convertir vacíos a None para SQL
+            df = df.replace({np.nan: None, 'null': None, 'NaN': None, '': None})
+
+            # 3. Formatear fechas
+            for col in [c for c in df.columns if 'FECHA' in c]:
                 df[col] = pd.to_datetime(df[col], errors='coerce')
 
-            # Si definiste RENOVACION como VARCHAR(10) en el SQL:
-            if 'RENOVACION' in df.columns:
-                df['RENOVACION'] = df['RENOVACION'].apply(lambda x: 'Sí' if str(x).upper() in ['TRUE', '1', 'S', 'SI'] else 'No')
+            # 4. PROTECCIÓN DE LLAVES FORÁNEAS (Evita el error que tuviste)
+            df = validar_llaves_foraneas(df, tabla_destino, engine)
 
-            # --- 4. CARGA ---
-            with engine.begin() as conn:
-                tabla_temp = f"temp_{tabla_destino}"
-                
-                # Cargamos a una tabla temporal
-                df.to_sql(tabla_temp, conn, schema=SCHEMA_NAME, if_exists='replace', index=False)
-                
-                # Preparamos las columnas para el INSERT
-                columnas_dest = ", ".join([f'"{c}"' for c in df.columns])
-                
-                # Casteo automático para fechas en la selección
-                cols_origen_list = []
-                for c in df.columns:
-                    if 'FECHA' in c:
-                        cols_origen_list.append(f'"{c}"::DATE')
-                    else:
-                        cols_origen_list.append(f'"{c}"')
-                
-                columnas_origen = ", ".join(cols_origen_list)
-                pk_columna = df.columns[0] # Se asume que la primera columna es la PK (ID)
-
-                # UPSERT: Inserta si no existe, o actualiza si ya existe (opcional)
-                # Si prefieres solo insertar nuevos, usa 'DO NOTHING'
-                query_upsert = text(f"""
-                    INSERT INTO "{SCHEMA_NAME}"."{tabla_destino}" ({columnas_dest})
-                    SELECT {columnas_origen} FROM "{SCHEMA_NAME}"."{tabla_temp}"
-                    ON CONFLICT ("{pk_columna}") DO NOTHING;
-                """)
-                
-                conn.execute(query_upsert)
-                conn.execute(text(f'DROP TABLE "{SCHEMA_NAME}"."{tabla_temp}"'))
-                
-            print(f"✅ Éxito: {len(df)} registros procesados para {tabla_destino}")
+            # 5. Envío a Base de Datos
+            df.to_sql(tabla_destino, engine, schema=SCHEMA_NAME, if_exists='append', index=False)
+            print(f"   ✅ {tabla_destino.upper()}: {len(df)} filas.")
 
         except Exception as e:
-            print(f"❌ Error en {nombre_base}: {str(e)}")
+            print(f"   ❌ ERROR en {tabla_destino}: {e}")
+            return # Detener para evitar inconsistencias
 
 if __name__ == "__main__":
     cargar_datos()
+    print("\n🏁 Proceso finalizado.")
