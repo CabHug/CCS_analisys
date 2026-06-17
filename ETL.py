@@ -72,8 +72,8 @@ for y in CCS.work_files_per_year:#-> start on 2024 <-#
 
         # 'GENERO' FIELD
         gender = next(headListIter)
-        #work_df, wrong_df = CCS.check_if_empty(wrong_df, work_df, gender, id_column, ['R','F'])
-        #CCS.replace_text(work_df, gender, CCS.gender_sre)
+        work_df, wrong_df = CCS.check_if_empty(wrong_df, work_df, gender, id_column, ['R','F'])
+        CCS.replace_text(work_df, gender, CCS.gender_sre)
         work_df[gender] = work_df[gender].astype(str).str.strip() # Limpia espacios
         CCS.replace_text(work_df, gender, CCS.gender_sre, ifno=None) # ifno=None para Postgres
 
@@ -122,20 +122,20 @@ for y in CCS.work_files_per_year:#-> start on 2024 <-#
 
         # 'FECHA DE VENTA' new column added on data frame
         sale_date = next(headListIter)
-        pay_date = 'FECHA DE PAGO' 
-        if (work_df[sale_date]=='null').all():
-            work_df[sale_date] = work_df[pay_date]  # Default to pay_date if all are NaN
-        else:
-            work_df, wrong_df = CCS.check_if_empty(wrong_df, work_df, sale_date, id_column, ['R'])
+        standard_date = pd.Timestamp(f'{f_year}-{f_month:02d}-01')
         work_df[sale_date] = pd.to_datetime(work_df[sale_date], format="%d/%m/%Y", errors='coerce')
-        work_df[sale_date] = work_df[sale_date].apply(lambda x : x.replace(year=f_year) if pd.notnull(x) and x.year != f_year else x)
-        work_df[sale_date] = work_df[sale_date].fillna(pd.Timestamp(f'04/{f_month:02d}/{f_year}'))
-        work_df[sale_date] = work_df[sale_date].apply(lambda x : x.strftime('%d/%m/%Y') if pd.notnull(x) else x)
+        # Replace dates where year or month don't match the file name with the standard date
+        work_df[sale_date] = work_df[sale_date].apply(
+            lambda x: standard_date if pd.notnull(x) and (x.year != f_year or x.month != f_month) else x
+        )
+        # Fill missing/empty dates with standard date (day 1 of file month/year)
+        work_df[sale_date] = work_df[sale_date].fillna(standard_date)
+        work_df[sale_date] = work_df[sale_date].apply(lambda x: x.strftime('%d/%m/%Y') if pd.notnull(x) else x)
 
         # 'VALOR UNITARIO' FIELD
         unit_value = next(headListIter)
-        #work_df[unit_value] = pd.to_numeric(work_df[unit_value], errors='coerce')
         work_df[unit_value] = pd.to_numeric(work_df[unit_value], errors='coerce').fillna(0)
+        work_df[unit_value] = work_df[unit_value].apply(lambda x: abs(x) if pd.notnull(x) else x)
         work_df, wrong_df = CCS.check_if_empty(wrong_df, work_df, unit_value, course, ['R'])
 
         # 'DESCUENTO' new column added on data frame
@@ -147,12 +147,11 @@ for y in CCS.work_files_per_year:#-> start on 2024 <-#
 
         # 'PRECIO NETO' new column added on data frame
         net_price = next(headListIter)
-        if work_df[net_price].isnull().all():
-            work_df[net_price] = work_df[unit_value]
-        else:
-            #work_df[unit_value] = pd.to_numeric(work_df[unit_value], errors='coerce')
-            work_df[net_price] = pd.to_numeric(work_df[net_price], errors='coerce').fillna(0)
-            work_df, wrong_df = CCS.check_if_empty(wrong_df, work_df, net_price, id_column, ['R'])
+        work_df[net_price] = pd.to_numeric(work_df[net_price], errors='coerce')
+        work_df[net_price] = work_df[net_price].apply(lambda x: abs(x) if pd.notnull(x) else x)
+        # Fill missing net price with unit value
+        work_df[net_price] = work_df[net_price].fillna(work_df[unit_value])
+        work_df, wrong_df = CCS.check_if_empty(wrong_df, work_df, net_price, id_column, ['R'])
 
         # 'MEDIO DE PAGO' FIELD
         payment = next(headListIter)
@@ -161,10 +160,14 @@ for y in CCS.work_files_per_year:#-> start on 2024 <-#
         # 'FECHA DE PAGO' FIELD
         pay_date = next(headListIter)
         work_df[pay_date] = pd.to_datetime(work_df[pay_date], format="%d/%m/%Y", errors='coerce')
-        work_df[pay_date] = work_df[pay_date].apply(lambda x : x.replace(year=f_year) if pd.notnull(x) and x.year != f_year else x)
-        work_df, wrong_df = CCS.check_if_empty(wrong_df, work_df, pay_date, id_column, ['R'])
-        work_df[pay_date] = work_df[pay_date].fillna(pd.Timestamp(f'04/{f_month:02d}/{f_year}'))
-        work_df[pay_date] = work_df[pay_date].apply(lambda x : x.strftime('%d/%m/%Y') if pd.notnull(x) else x)
+        # Replace dates where year or month don't match the file name with the standard date
+        work_df[pay_date] = work_df[pay_date].apply(
+            lambda x: standard_date if pd.notnull(x) and (x.year != f_year or x.month != f_month) else x
+        )
+        # Fill missing pay date with sale date value
+        sale_date_parsed = pd.to_datetime(work_df[sale_date], format="%d/%m/%Y", errors='coerce')
+        work_df[pay_date] = work_df[pay_date].fillna(sale_date_parsed)
+        work_df[pay_date] = work_df[pay_date].apply(lambda x: x.strftime('%d/%m/%Y') if pd.notnull(x) else x)
 
         # 'ELABORO' FIELD
         maker = next(headListIter)

@@ -335,14 +335,20 @@ class NormalMap:
         }
 
         self.created_by_map = {
-                "Sebastian": [
-                    "Bancolombia","Sebas"
+                "Sebastian Rosero Patiño": [
+                    "Bancolombia","Sebas","Sebastian"
                 ],
-                "Camilo": [
-                    "Cami"
+                "Juan Camilo Urbano Paredes": [
+                    "Cami","Camilo"
                 ],
-                "Nicolas": [
-                    "Nico"
+                "Nicolas Rosero Patiño": [
+                    "Nico","Nicolas"
+                ],
+                "Lina Maria Guerrero Patiño": [
+                    "Lina"
+                ],
+                "Lucio Francisco Rosero Muñoz": [
+                    "Francisco","Pacho","Franciso"
                 ]
             }
 
@@ -350,17 +356,23 @@ class NormalMap:
                 "Brayan": [
                     "Barayan","Bryan","<"
                 ],
-                "Francisco": [
-                    "Franciso"
-                ],
                 "H. San Pedro": [
                     "San Pedro"
                 ],
-                "Nicolas": [
-                    "Nico"
+                "Sebastian Rosero Patiño": [
+                    "Bancolombia","Sebas","Sebastian"
                 ],
-                "Sebastian": [
-                    "Sebas"
+                "Juan Camilo Urbano Paredes": [
+                    "Cami","Camilo"
+                ],
+                "Nicolas Rosero Patiño": [
+                    "Nico","Nicolas"
+                ],
+                "Lina Maria Guerrero Patiño": [
+                    "Lina"
+                ],
+                "Lucio Francisco Rosero Muñoz": [
+                    "Francisco","Pacho","Franciso"
                 ]
             }
 

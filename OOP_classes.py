@@ -211,7 +211,10 @@ class Project(DataPipeline):
         self.work_files_per_year = {}
         self.gender_sre = {
             'M': 'Masculino',
-            'F': 'Femenino'
+            'm': 'Masculino',
+            'n': 'Masculino',
+            'F': 'Femenino',
+            'f': 'Femenino'
             }
         self.month_is = {
             'ENERO': 1, 'FEBRERO': 2, 'MARZO': 3, 'ABRIL': 4,
