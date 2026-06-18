@@ -43,29 +43,29 @@ def convertir_xlsx_a_csv_final_con_limpieza_numerica(ruta_origen, ruta_destino):
             try:
                 df = pd.read_excel(ruta_xlsx)
                 
-                # 2. Normalización de Fechas
+                # 2. Normalización de Fechas para PostgreSQL
                 for col in columnas_fecha:
                     if col in df.columns:
-                        df[col] = pd.to_datetime(
-                            df[col], 
-                            errors='coerce'
-                        )
-                        print(f"    🔄 Columna '{col}' convertida a formato SQL.")
+                        # Forzamos la lectura asumiendo que el Excel trae el formato día/mes/año
+                        df[col] = pd.to_datetime(df[col], format='%d/%m/%Y', errors='coerce', dayfirst=True)
+                        
+                        # Formateamos explícitamente al estándar ISO (YYYY-MM-DD) para la base de datos
+                        df[col] = df[col].dt.strftime('%Y-%m-%d')
+                        print(f"    🔄 Columna '{col}' convertida a formato SQL (YYYY-MM-DD).")
                 
                 # 3. MODIFICACIÓN CLAVE: Rellenar nulos en columnas NUMÉRICAS
                 for col_num in columnas_numericas_obligatorias:
                     if col_num in df.columns:
-                        # Reemplazamos cualquier NaN o valor no numérico con 0
                         df[col_num] = pd.to_numeric(df[col_num], errors='coerce').fillna(0)
                         print(f"    💵 Columna '{col_num}' rellenada con 0 para evitar error NUMERIC: 'null'.")
 
-                # 4. Guardar como CSV, con manejo de nulos (SOLO para columnas no numéricas obligatorias)
-                # na_rep='null' ahora solo afecta a las columnas de texto o fechas fallidas
+                # 4. Guardar como CSV
+                # Usar na_rep='' asegura que quede en blanco, lo que PostgreSQL interpreta limpiamente como NULL en un COPY
                 df.to_csv(
                     ruta_csv, 
                     index=False, 
                     encoding='utf-8', 
-                    na_rep='' # Rellena otros nulos (texto, fechas fallidas) con 'null'
+                    na_rep='' 
                 )
                 
                 print(f"  ✅ Convertido '{nombre_archivo}'.")
@@ -74,4 +74,5 @@ def convertir_xlsx_a_csv_final_con_limpieza_numerica(ruta_origen, ruta_destino):
                 print(f"  ❌ Error al procesar {nombre_archivo}: {e}")
                 
     print("\nProceso de conversión finalizado. Los CSV están listos para PostgreSQL.")
+
 convertir_xlsx_a_csv_final_con_limpieza_numerica(CCS.db_tables, f'{CCS.db_tables}/a_csv_tables')

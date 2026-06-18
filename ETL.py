@@ -24,7 +24,10 @@ for y in CCS.work_files_per_year:#-> start on 2024 <-#
         f_month = CCS.month_is[file.split('_')[2][:-5]]
         # Take info (data_source, year and file) to build the path
         work_df = pd.read_excel(f'{CCS.get_info_source_path()}/{y}/{file}')
-        f_year = int(f_year)
+        
+        # FORZAR ENTEROS: Evita errores de tipo (int vs str) al comparar con los componentes de dt
+        f_year_int = int(f_year)
+        f_month_int = int(f_month)
 
         # New dataframe to store wrong data from each file
         wrong_df = pd.DataFrame(columns=work_df.columns)
@@ -120,17 +123,24 @@ for y in CCS.work_files_per_year:#-> start on 2024 <-#
         seller = next(headListIter)
         work_df, wrong_df = CCS.check_if_empty(wrong_df, work_df, seller, id_column, ['R','T','F'])
 
-        # 'FECHA DE VENTA' new column added on data frame
+        # 'FECHA DE VENTA' FIELD
         sale_date = next(headListIter)
-        standard_date = pd.Timestamp(f'{f_year}-{f_month:02d}-01')
-        work_df[sale_date] = pd.to_datetime(work_df[sale_date], format="%d/%m/%Y", errors='coerce')
-        # Replace dates where year or month don't match the file name with the standard date
-        work_df[sale_date] = work_df[sale_date].apply(
-            lambda x: standard_date if pd.notnull(x) and (x.year != f_year or x.month != f_month) else x
-        )
-        # Fill missing/empty dates with standard date (day 1 of file month/year)
+        standard_date = pd.Timestamp(f'{f_year_int}-{f_month_int:02d}-01')
+        
+        # 1. Convertir a datetime de forma flexible
+        work_df[sale_date] = pd.to_datetime(work_df[sale_date], dayfirst=True, errors='coerce')
+        
+        # 2. Detectar SOLO las filas que NO coinciden en mes o año (ignorando las vacías de momento)
+        mask_wrong_sale = work_df[sale_date].notnull() & ((work_df[sale_date].dt.year != f_year_int) | (work_df[sale_date].dt.month != f_month_int))
+        
+        # Reemplazar únicamente aquellas fechas que vinieran con un período erróneo
+        work_df.loc[mask_wrong_sale, sale_date] = standard_date
+        
+        # 3. Validar consistencia estructural según los métodos de tu clase Project
+        work_df, wrong_df = CCS.check_if_empty(wrong_df, work_df, sale_date, id_column, ['R'])
+        
+        # 4. Rellenar las celdas que originalmente estaban vacías (NaT) con la fecha por defecto
         work_df[sale_date] = work_df[sale_date].fillna(standard_date)
-        work_df[sale_date] = work_df[sale_date].apply(lambda x: x.strftime('%d/%m/%Y') if pd.notnull(x) else x)
 
         # 'VALOR UNITARIO' FIELD
         unit_value = next(headListIter)
@@ -145,12 +155,18 @@ for y in CCS.work_files_per_year:#-> start on 2024 <-#
         else:
             work_df, wrong_df = CCS.check_if_empty(wrong_df, work_df, discount, id_column, ['R','C','F'])
 
-        # 'PRECIO NETO' new column added on data frame
+        # 'PRECIO NETO' new column added on data frame (LOGICA CORREGIDA)
         net_price = next(headListIter)
-        work_df[net_price] = pd.to_numeric(work_df[net_price], errors='coerce')
+        work_df[net_price] = pd.to_numeric(work_df[net_price], errors='coerce').fillna(0)
         work_df[net_price] = work_df[net_price].apply(lambda x: abs(x) if pd.notnull(x) else x)
-        # Fill missing net price with unit value
-        work_df[net_price] = work_df[net_price].fillna(work_df[unit_value])
+        
+        # Máscara para identificar filas donde el precio neto es cero
+        mask_zero_net = (work_df[net_price] == 0)
+        
+        # Si es cero, toma el valor de la columna valor unitario y el descuento se marca como 'Sin descuento'
+        work_df.loc[mask_zero_net, net_price] = work_df.loc[mask_zero_net, unit_value]
+        work_df.loc[mask_zero_net, discount] = 'Sin descuento'
+        
         work_df, wrong_df = CCS.check_if_empty(wrong_df, work_df, net_price, id_column, ['R'])
 
         # 'MEDIO DE PAGO' FIELD
@@ -159,19 +175,23 @@ for y in CCS.work_files_per_year:#-> start on 2024 <-#
 
         # 'FECHA DE PAGO' FIELD
         pay_date = next(headListIter)
-        work_df[pay_date] = pd.to_datetime(work_df[pay_date], format="%d/%m/%Y", errors='coerce')
-        # Replace dates where year or month don't match the file name with the standard date
-        work_df[pay_date] = work_df[pay_date].apply(
-            lambda x: standard_date if pd.notnull(x) and (x.year != f_year or x.month != f_month) else x
-        )
-        # Fill missing pay date with sale date value
-        sale_date_parsed = pd.to_datetime(work_df[sale_date], format="%d/%m/%Y", errors='coerce')
-        work_df[pay_date] = work_df[pay_date].fillna(sale_date_parsed)
-        work_df[pay_date] = work_df[pay_date].apply(lambda x: x.strftime('%d/%m/%Y') if pd.notnull(x) else x)
+        
+        # 1. Convertir a datetime
+        work_df[pay_date] = pd.to_datetime(work_df[pay_date], dayfirst=True, errors='coerce')
+        
+        # 2. Identificar fechas de pago que no correspondan al período del documento
+        mask_wrong_pay = work_df[pay_date].notnull() & ((work_df[pay_date].dt.year != f_year_int) | (work_df[pay_date].dt.month != f_month_int))
+        work_df.loc[mask_wrong_pay, pay_date] = pd.NaT
+        
+        # 3. Rellenar los vacíos o valores erróneos usando la 'FECHA DE VENTA' normalizada
+        work_df[pay_date] = work_df[pay_date].fillna(work_df[sale_date])
+        
+        # 4. Formatear finalmente ambas columnas a string para mantener el estándar visual del Excel
+        work_df[sale_date] = work_df[sale_date].dt.strftime('%d/%m/%Y')
+        work_df[pay_date] = work_df[pay_date].dt.strftime('%d/%m/%Y')
 
         # 'ELABORO' FIELD
         maker = next(headListIter)
-        #work_df, wrong_df = CCS.check_if_empty(wrong_df, work_df, maker, id_column, ['R','T','F'])
         work_df[maker] = work_df[maker].astype(str).str.strip().replace(['nan', 'None', 'null'], None)
         work_df, wrong_df = CCS.check_if_empty(wrong_df, work_df, maker, id_column, ['R','T','F'])
 
