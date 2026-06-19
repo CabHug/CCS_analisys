@@ -1,0 +1,27 @@
+# 1. CARPETAS DE DATOS Y RESULTADOS (Los "cartuchos")
+
+data_source/
+DB_table/
+
+# 2. RECURSOS EXTERNOS AL PIPELINE
+
+Power_BI_analisys/
+
+# 3. CACHÉ Y ARCHIVOS TEMPORALES DE PYTHON
+
+__pycache__/
+*.py[cod]
+*~
+
+# 4. ENTORNOS VIRTUALES LOCALES
+
+venv/
+.venv/
+env/
+.env/
+
+# 5. CONTROL DE VERSIONES Y SECRETOS
+
+.git/
+.gitignore
+.env

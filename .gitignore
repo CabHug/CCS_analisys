@@ -6,8 +6,9 @@
 # Ignore CSV files
 *.csv
 
+# se comenta porque se agrego requirements.txt como requisito de docker
 # Ignore TXT files
-*.txt
+#*.txt
 
 # Ignore Excel files
 *.xls

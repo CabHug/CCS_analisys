@@ -15,7 +15,7 @@ DB_URL = f"postgresql://{CCS.db_config['user']}:{CCS.db_config['password']}@{CCS
 SCHEMA_NAME = 'public'
 
 # Ruta de archivos CSV
-RUTA_CSV_CARGA = r"C:\Users\Hugo\OneDrive\Documentos\MEGA\PROYECTOS\CCS\Analisis CCS\Python-analisys\DB_tables\a_csv_tables"
+RUTA_CSV_CARGA = r".\DB_tables\a_csv_tables"
 
 # Mapeo exacto CSV -> Tabla DB
 MAPEO_TABLAS = {
