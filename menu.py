@@ -45,7 +45,7 @@ def flujo_procesamiento_archivos():
     OPCIÓN 1: Ejecuta la secuencia de limpieza y generación de CSV.
     """
     directorio_actual = os.path.dirname(os.path.abspath(__file__))
-    scripts_a_ejecutar = ["etl.py", "table_etl.py", "transform_to_csv.py"]
+    scripts_a_ejecutar = ["ETL.py", "table_ETL.py", "transform_to_csv.py"]
 
     limpiar_pantalla()
     mostrar_encabezado()

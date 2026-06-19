@@ -1,7 +1,7 @@
 # 1. CARPETAS DE DATOS Y RESULTADOS (Los "cartuchos")
 
 data_source/
-DB_table/
+DB_tables/
 
 # 2. RECURSOS EXTERNOS AL PIPELINE
 

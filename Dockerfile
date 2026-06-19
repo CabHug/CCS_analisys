@@ -11,7 +11,7 @@ WORKDIR /app
 
 # 4. Instalar dependencias del sistema necesarias para compilar librerías como psycopg2
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
+    build-essential \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
