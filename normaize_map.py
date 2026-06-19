@@ -354,26 +354,29 @@ class NormalMap:
 
         self.salesperson_map = {
                 "Brayan": [
-                    "Barayan","Bryan","<"
+                    "Barayan","Bryan","<","Brayan"
                 ],
                 "H. San Pedro": [
-                    "San Pedro"
+                    "San Pedro","H. San Pedro"
                 ],
                 "Sebastian Rosero Patiño": [
-                    "Bancolombia","Sebas","Sebastian"
+                    "Bancolombia","Sebas","Sebastian","Sebastian Rosero Patiño"
                 ],
                 "Juan Camilo Urbano Paredes": [
-                    "Cami","Camilo"
+                    "Cami","Camilo","Juan Camilo Urbano Paredes"
                 ],
                 "Nicolas Rosero Patiño": [
-                    "Nico","Nicolas"
+                    "Nico","Nicolas","Nicolas Rosero Patiño"
                 ],
                 "Lina Maria Guerrero Patiño": [
-                    "Lina"
+                    "Lina","Lina Maria Guerrero Patiño"
                 ],
                 "Lucio Francisco Rosero Muñoz": [
-                    "Francisco","Pacho","Franciso"
-                ]
+                    "Francisco","Pacho","Franciso","Lucio Francisco Rosero Muñoz"
+                ],
+                "Luis Olivares Pinta Lopez": [
+                    "Luis Pinta","Luis Olivares Pinta Lopez"
+                                ]
             }
 
         self.payment_method_map = {
