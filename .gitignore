@@ -17,3 +17,7 @@
 
 # ignore .tar files from docker
 *.tar
+
+# ignore power BI files
+*.pbix
+
