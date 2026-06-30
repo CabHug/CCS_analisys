@@ -13,3 +13,6 @@
 *.xls
 *.xlsx
 *.xlsm
+
+# power BI files
+*.pbix

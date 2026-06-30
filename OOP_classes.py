@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import json
 import os
 import re
@@ -126,7 +127,117 @@ class DataPipeline:
         
         raw_df[column] = raw_df[column].apply(lambda x : replaced.get(x, x))
         return raw_df
-    
+
+    # ------------------------------------------------------------------------------
+    # NUEVAS REGLAS DE NEGOCIO: valor_unitario / precio_neto / descuento
+    # ------------------------------------------------------------------------------
+
+    # Fase 1: Sanitización (reutilizable para cualquier columna numérica)
+    def _sanitize_numeric_column(self, series):
+        """
+        - Nulos, vacíos o texto/letras no numéricas -> 0
+        - Cualquier número -> su valor absoluto
+        """
+        cleaned = pd.to_numeric(series, errors='coerce')  # texto/letras/None -> NaN
+        cleaned = cleaned.fillna(0)
+        cleaned = cleaned.abs()
+        return cleaned
+
+    # Mascara de "vacío" para la columna descuento (NaN o variantes de string vacío)
+    def _is_descuento_empty(self, series):
+        return (
+            series.isna()
+            | series.astype(str).str.strip().str.lower().isin(['', 'nan', 'none', 'null'])
+        )
+
+    def apply_pricing_business_rules(self, df, col_valor_unitario='valor_unitario',
+                                      col_precio_neto='precio_neto', col_descuento='descuento'):
+        """
+        Aplica las reglas de negocio sobre valor_unitario, precio_neto y descuento,
+        detectando automáticamente qué columnas existen en el DataFrame de entrada.
+
+        Escenario 1 (solo existe valor_unitario):
+            - precio_neto = copia del valor_unitario ya sanitizado.
+            - descuento = 'Sin descuento' si valor_unitario > 0, 'Obsequio' si == 0.
+
+        Escenario 2 (existen valor_unitario, precio_neto y descuento):
+            - Condición A: precio_neto==0 y valor_unitario>0 -> precio_neto = valor_unitario.
+            - Condición B: precio_neto>0 y valor_unitario==0 -> valor_unitario = precio_neto.
+            - Condición C: ambos == 0 -> descuento = 'Obsequio' (sobrescribe siempre).
+            - Condición D: ambos > 0 -> valores numéricos intactos.
+            En A, B y D: si descuento estaba vacío, se asigna 'Sin descuento'.
+        """
+        df = df.copy()
+
+        has_vu = col_valor_unitario in df.columns
+        has_pn = col_precio_neto in df.columns
+        has_dc = col_descuento in df.columns
+
+        if not has_vu:
+            print(f"⚠️ No se encontró la columna '{col_valor_unitario}'; no se aplican reglas de precio.")
+            return df
+
+        # --- ESCENARIO 1: solo valor_unitario ---
+        if not has_pn and not has_dc:
+            print(f"🤖 Escenario 1 de pricing: solo '{col_valor_unitario}' presente.")
+
+            df[col_valor_unitario] = self._sanitize_numeric_column(df[col_valor_unitario])
+            df[col_precio_neto] = df[col_valor_unitario]
+            df[col_descuento] = np.where(
+                df[col_valor_unitario] > 0, 'Sin descuento', 'Obsequio'
+            )
+            return df
+
+        # --- ESCENARIO 2: valor_unitario + precio_neto + descuento ---
+        if has_vu and has_pn and has_dc:
+            print(f"🤖 Escenario 2 de pricing: '{col_valor_unitario}', '{col_precio_neto}' y '{col_descuento}' presentes.")
+
+            df[col_valor_unitario] = self._sanitize_numeric_column(df[col_valor_unitario])
+            df[col_precio_neto] = self._sanitize_numeric_column(df[col_precio_neto])
+
+            # FIX: si 'descuento' viene completamente vacía, pandas la infiere como
+            # float64 (todo NaN). Con Copy-on-Write, asignarle texto ('Sin descuento',
+            # 'Obsequio') sobre ese dtype numérico revienta con
+            # "TypeError: Invalid value ... for dtype 'float64'".
+            # Forzamos la columna a tipo 'object' (texto) ANTES de cualquier
+            # asignación para que pandas la trate como string desde el inicio.
+            df[col_descuento] = df[col_descuento].astype(object)
+
+            # Snapshots inmutables ANTES de modificar nada: evita efectos en cascada
+            # entre condiciones (las 4 máscaras son mutuamente excluyentes y exhaustivas).
+            vu = df[col_valor_unitario].copy()
+            pn = df[col_precio_neto].copy()
+            descuento_vacio = self._is_descuento_empty(df[col_descuento])
+
+            mask_a = (pn == 0) & (vu > 0)   # Condición A
+            mask_b = (pn > 0) & (vu == 0)   # Condición B
+            mask_c = (vu == 0) & (pn == 0)  # Condición C
+            mask_d = (vu > 0) & (pn > 0)    # Condición D (fallback)
+
+            # Condición A: precio_neto toma el valor de valor_unitario
+            df.loc[mask_a, col_precio_neto] = vu[mask_a]
+            df.loc[mask_a & descuento_vacio, col_descuento] = 'Sin descuento'
+
+            # Condición B: valor_unitario toma el valor de precio_neto
+            df.loc[mask_b, col_valor_unitario] = pn[mask_b]
+            df.loc[mask_b & descuento_vacio, col_descuento] = 'Sin descuento'
+
+            # Condición C: ambos en cero -> es un obsequio, se sobrescribe SIEMPRE
+            df.loc[mask_c, col_descuento] = 'Obsequio'
+
+            # Condición D: ambos > 0 -> valores intactos, solo se completa descuento si está vacío
+            df.loc[mask_d & descuento_vacio, col_descuento] = 'Sin descuento'
+
+            return df
+
+        # --- Combinación de columnas no contemplada en el requerimiento ---
+        print(
+            "⚠️ Combinación de columnas no contemplada en las reglas de negocio de pricing "
+            f"({col_valor_unitario}={has_vu}, {col_precio_neto}={has_pn}, {col_descuento}={has_dc}). "
+            "No se aplican transformaciones."
+        )
+        return df
+
 ## ---------------------------------------------------------------------------------
     """
     ##  Parameters  ##
