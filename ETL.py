@@ -144,30 +144,21 @@ for y in CCS.work_files_per_year:#-> start on 2024 <-#
 
         # 'VALOR UNITARIO' FIELD
         unit_value = next(headListIter)
-        work_df[unit_value] = pd.to_numeric(work_df[unit_value], errors='coerce').fillna(0)
-        work_df[unit_value] = work_df[unit_value].apply(lambda x: abs(x) if pd.notnull(x) else x)
-        work_df, wrong_df = CCS.check_if_empty(wrong_df, work_df, unit_value, course, ['R'])
 
-        # 'DESCUENTO' new column added on data frame
+        # 'DESCUENTO' FIELD
         discount = next(headListIter)
-        if work_df[discount].isnull().all():
-            work_df[discount] = 'Sin descuento'
-        else:
-            work_df, wrong_df = CCS.check_if_empty(wrong_df, work_df, discount, id_column, ['R','C','F'])
 
-        # 'PRECIO NETO' new column added on data frame (LOGICA CORREGIDA)
+        # 'PRECIO NETO' FIELD
         net_price = next(headListIter)
-        work_df[net_price] = pd.to_numeric(work_df[net_price], errors='coerce').fillna(0)
-        work_df[net_price] = work_df[net_price].apply(lambda x: abs(x) if pd.notnull(x) else x)
-        
-        # Máscara para identificar filas donde el precio neto es cero
-        mask_zero_net = (work_df[net_price] == 0)
-        
-        # Si es cero, toma el valor de la columna valor unitario y el descuento se marca como 'Sin descuento'
-        work_df.loc[mask_zero_net, net_price] = work_df.loc[mask_zero_net, unit_value]
-        work_df.loc[mask_zero_net, discount] = 'Sin descuento'
-        
-        work_df, wrong_df = CCS.check_if_empty(wrong_df, work_df, net_price, id_column, ['R'])
+
+        # Nuevas reglas de negocio unificadas para valor_unitario / precio_neto / descuento
+        # (sanitización + Escenario 1 o 2 según las columnas presentes en work_df)
+        work_df = CCS.apply_pricing_business_rules(
+            work_df,
+            col_valor_unitario=unit_value,
+            col_precio_neto=net_price,
+            col_descuento=discount
+        )
 
         # 'MEDIO DE PAGO' FIELD
         payment = next(headListIter)
