@@ -25,3 +25,6 @@ env/
 .git/
 .gitignore
 .env
+
+# 6. ignore .tar files from docker
+*.tar

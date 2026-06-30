@@ -14,3 +14,6 @@
 *.xls
 *.xlsx
 *.xlsm
+
+# ignore .tar files from docker
+*.tar
